@@ -1,0 +1,140 @@
+@import 'variables';
+@import 'color_form/color_form';
+@import 'contrast_grid/contrast_grid_interactions';
+
+$sidebar-shadow: -3px 0 3px rgba($color-black, .15);
+
+html,
+body {
+    box-sizing: border-box;
+    font-family: $font-family-default;
+    font-weight: $font-weight-light;
+    margin: 0;
+    min-height: 100vh;
+    padding: 0;
+}
+
+*,
+*:before,
+*:after {
+    box-sizing: inherit;
+}
+
+a {
+    color: $color-link;
+    text-decoration: none;
+
+    &:hover {
+        color: $color-link-hover;
+    }
+}
+
+// The icons inherit `fill` from the host element, so the existing icon classes
+// keep working when applied to <es-icon>.
+es-icon {
+    display: inline-block;
+    line-height: 0;
+
+    svg {
+        height: 100%;
+        width: 100%;
+    }
+}
+
+.es-web-tool__flex-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.es-web-tool__outer-wrap {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-height: 100vh;
+}
+
+.es-web-tool__header {
+    align-items: center;
+    background: $color-gray-12;
+    color: $color-white;
+    display: flex;
+    flex: none;
+    height: 92px;
+    // flex: 0 0 92px;
+    // flex-grow: 0;
+    justify-content: space-between;
+    padding: $spacing-md;
+}
+
+.es-web-tool__configurator {
+    align-items: stretch;
+    display: flex;
+    max-width: 100vw;
+    min-height: 100vh;
+}
+
+.es-web-tool__sidebar {
+    background: $color-gray-95;
+    flex: 0 0 320px;
+}
+
+.es-web-tool__title {
+    align-items: center;
+    display: flex;
+    font-size: $font-size-h3;
+    font-weight: 300;
+    margin: 0;
+    padding: $spacing-md;
+    padding-bottom: 0;
+}
+
+.es-web-tool__title-text {
+    display: block;
+}
+
+.es-web-tool__results {
+    box-shadow: $sidebar-shadow;
+    flex: 1;
+    max-width: calc(100vw - 310px);
+    padding: $spacing-default 0 $spacing-default $spacing-default;
+}
+
+.es-web-tool__sidebar-actions {
+    padding: 0 $spacing-md $spacing-md;
+}
+
+// Grid legend, moved out of the table into the sidebar.
+.es-contrast-grid-key {
+    border-top: solid 1px darken($color-gray-95, 10%);
+    color: $color-black;
+    margin: 0 $spacing-md $spacing-md;
+    padding-top: $spacing-md;
+}
+
+.es-contrast-grid-key__label {
+    align-items: center;
+    display: flex;
+    font-size: $font-size-sm;
+    margin-bottom: $spacing-xs;
+
+    .es-contrast-grid__accessibility-label {
+        flex-shrink: 0;
+        margin-right: $spacing-xs;
+    }
+}
+
+.es-contrast-grid-key__link {
+    display: inline-block;
+    font-size: $font-size-sm;
+    margin-top: $spacing-xs;
+}
+
+.es-web-tool__legal {
+    font-size: $font-size-sm;
+    margin: 0;
+    text-align: center;
+}
+
+// Was previously injected as an inline <style> by the code export, so it has to
+// stay last in the cascade.
+@import 'contrast_grid/contrast_grid';

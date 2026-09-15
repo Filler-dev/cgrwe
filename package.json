@@ -1,0 +1,29 @@
+{
+  "name": "eightshapes-contrast-grid",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Test many foreground and background color combos for compliance with WCAG 2.0 minimum contrast.",
+  "authors": [
+    "Kevin Powell <kevinmpowell@gmail.com>"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "browserslist": [
+    "defaults",
+    "not dead"
+  ],
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "bootstrap-icons": "^1.13.1",
+    "sass": "^1.93.2",
+    "vite": "^7.1.7"
+  },
+  "dependencies": {
+    "sortablejs": "^1.15.7"
+  }
+}

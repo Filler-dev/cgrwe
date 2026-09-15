@@ -1,0 +1,107 @@
+/* SortableJS drag states */
+.escg-drag-helper {
+    box-shadow: $drop-shadow-default;
+    transform: scale(1.02);
+}
+
+.escg-drag-placeholder {
+    background: #EFEFEF !important;
+    box-shadow: 4px 5px 4px #C6C6C6 inset;
+
+    * {
+        visibility: hidden;
+    }
+}
+
+////////////////////////
+.es-contrast-grid__key-swatch--foreground {
+    position: relative;
+
+    .es-contrast-grid__key-swatch-label {
+        order: 2;
+        margin-bottom: auto;
+        margin-top: auto;
+    }
+
+    .es-contrast-grid__key-swatch-controls {
+        align-items: center;
+        // background: inherit;
+        display: flex;
+        order: 1;
+        justify-content: space-between;
+        left: 0;
+        padding: $spacing-xs;
+        padding-bottom: 0;
+        padding-top: $spacing-xs / 2;
+        position: absolute;
+        top: 0;
+        width: 100%;
+        visibility: hidden;
+    }
+
+    .es-contrast-grid__key-swatch-remove {
+        margin-left: auto;
+        margin-right: 0;
+        order: 2;
+
+        .es-contrast-grid__key-swatch-remove-icon {
+            height: $font-size-sm;
+            width: $font-size-sm;
+        }
+    }
+
+    
+    &:hover {
+        .es-contrast-grid__key-swatch-controls {
+            visibility: visible;
+        }
+    }
+}
+
+.es-contrast-grid__key-swatch--background {
+    .es-contrast-grid__key-swatch-controls {
+        align-items: center;
+        display: none;
+        margin-left: auto;
+    }
+    
+    &:hover .es-contrast-grid__key-swatch-controls {
+        display: flex;
+    }
+}
+
+.es-contrast-grid__key-swatch-drag-handle--row {
+    cursor: ns-resize;
+}
+
+.es-contrast-grid__key-swatch-drag-handle--column {
+    cursor: ew-resize;
+}
+
+.es-contrast-grid__key-swatch-remove {
+    margin-right: $spacing-xs;
+}
+
+.es-contrast-grid__key-swatch-remove-icon {
+    fill: $color-white;
+    height: $font-size-lg;
+    width: $font-size-lg;
+
+    .es-contrast-grid--dark-label & {
+        fill: $color-black;
+    }
+}
+
+.es-contrast-grid__key-swatch-drag-handle-icon {
+    fill: $color-white;
+    height: $font-size-lg;
+    width: $font-size-lg;
+
+    .es-contrast-grid--dark-label & {
+        fill: $color-black;
+    }
+}
+
+.es-contrast-grid--row-and-column-removal-disabled *:hover .es-contrast-grid__key-swatch-controls {
+    display: none;
+}
