@@ -1,11 +1,9 @@
-// Application-wide event bus, replacing the jQuery events that were triggered
-// on `document`.
 export const EVENTS = {
-  colorFormValuesChanged: "escg.colorFormValuesChanged",
-  tileSizeChanged: "escg.tileSizeChanged",
-  removeColor: "escg.removeColor",
-  columnsSorted: "escg.columnsSorted",
-  rowsSorted: "escg.rowsSorted",
+  colorFormValuesChanged: "cg.colorFormValuesChanged",
+  tileSizeChanged: "cg.tileSizeChanged",
+  removeColor: "cg.removeColor",
+  columnsSorted: "cg.columnsSorted",
+  rowsSorted: "cg.rowsSorted",
 };
 
 export function emit(name, ...args) {

@@ -4,6 +4,8 @@ import template from "./color_form.html?raw";
 
 const HEX_REGEX = /^(#?[A-Fa-f0-9]{6}|#?[A-Fa-f0-9]{3})(,.*)?/gim;
 
+const HIDE_PARAM = "hide";
+
 // Keep in sync with the min/max attributes in color_form.html.
 const MIN_TILE_SIZE = 45;
 const MAX_TILE_SIZE = 300;
@@ -30,7 +32,9 @@ function parseColorInput(value) {
       HEX_REGEX.lastIndex++;
     }
 
-    const hex = (match[1].startsWith("#") ? match[1] : "#" + match[1]).toUpperCase();
+    const hex = (
+      match[1].startsWith("#") ? match[1] : "#" + match[1]
+    ).toUpperCase();
     if (seen.has(hex)) {
       continue;
     }
@@ -46,7 +50,9 @@ function parseColorInput(value) {
 
 function colorsToText(colors) {
   return colors
-    .map((color) => (color.label ? `${color.hex}, ${color.label}\n` : `${color.hex}\n`))
+    .map((color) =>
+      color.label ? `${color.hex}, ${color.label}\n` : `${color.hex}\n`,
+    )
     .join("");
 }
 
@@ -62,11 +68,11 @@ class ColorFormElement extends HTMLElement {
   connectedCallback() {
     this.innerHTML = template;
 
-    this.#form = qs(".es-color-form", this);
-    this.#foregroundInput = qs("#es-color-form__foreground-colors", this);
-    this.#backgroundInput = qs("#es-color-form__background-colors", this);
-    this.#tileSizeInput = qs("#es-color-form__tile-size", this);
-    this.#tileSizeNumber = qs("#es-color-form__tile-size-number", this);
+    this.#form = qs(".cg-color-form", this);
+    this.#foregroundInput = qs("#cg-color-form__foreground-colors", this);
+    this.#backgroundInput = qs("#cg-color-form__background-colors", this);
+    this.#tileSizeInput = qs("#cg-color-form__tile-size", this);
+    this.#tileSizeNumber = qs("#cg-color-form__tile-size-number", this);
 
     this.#bindEvents();
   }
@@ -88,7 +94,7 @@ class ColorFormElement extends HTMLElement {
     on(EVENTS.rowsSorted, (order) => this.#sortBackground(order));
 
     qsa(
-      ".es-color-form__show-background-colors, .es-color-form__hide-background-colors",
+      ".cg-color-form__show-background-colors, .cg-color-form__hide-background-colors",
       this,
     ).forEach((link) =>
       link.addEventListener("click", (event) => {
@@ -121,12 +127,40 @@ class ColorFormElement extends HTMLElement {
       onTileSizeSettled();
     });
 
-    qsa("input[name='es-color-form__show-contrast']", this).forEach((input) =>
+    qsa(".cg-color-form__level-toggle", this).forEach((input) =>
       input.addEventListener("change", () => {
-        qs("es-contrast-grid").addAccessibilityToSwatches();
+        qs("cg-contrast-grid").addAccessibilityToSwatches();
         this.#updateUrl();
       }),
     );
+
+    // Chromium only, so the buttons stay hidden unless the API is there.
+    const supportsEyeDropper = "EyeDropper" in window;
+    qsa(".cg-color-form__eyedropper", this).forEach((button) => {
+      button.hidden = !supportsEyeDropper;
+      button.addEventListener("click", () => this.#pickFromScreen(button));
+    });
+  }
+
+  async #pickFromScreen(button) {
+    let picked;
+
+    try {
+      picked = await new window.EyeDropper().open();
+    } catch {
+      return; // The picker was dismissed.
+    }
+
+    const textarea = qs("#" + button.dataset.target, this);
+    const hex = picked.sRGBHex.toUpperCase();
+
+    if (parseColorInput(textarea.value).some((color) => color.hex === hex)) {
+      return;
+    }
+
+    const existing = textarea.value.replace(/\s+$/, "");
+    textarea.value = (existing ? existing + "\n" : "") + hex + "\n";
+    this.#broadcastValues();
   }
 
   #getGridData() {
@@ -159,12 +193,21 @@ class ColorFormElement extends HTMLElement {
   }
 
   #updateUrl() {
-    const query = new URLSearchParams(new FormData(this.#form)).toString();
-    window.history.pushState(null, "", "/?" + query);
+    const params = new URLSearchParams(new FormData(this.#form));
+
+    const hidden = qsa(".cg-color-form__level-toggle", this)
+      .filter((input) => !input.checked)
+      .map((input) => input.dataset.level);
+
+    if (hidden.length > 0) {
+      params.set(HIDE_PARAM, hidden.join(","));
+    }
+
+    window.history.pushState(null, "", "/?" + params.toString());
   }
 
   #setInputText(inputName, text) {
-    qs("#es-color-form__" + inputName + "-colors", this).value = text;
+    qs("#cg-color-form__" + inputName + "-colors", this).value = text;
   }
 
   #removeColor(hex, colorset) {
@@ -173,14 +216,21 @@ class ColorFormElement extends HTMLElement {
     }
 
     const colors =
-      colorset === "background" ? this.#backgroundColors : this.#foregroundColors;
+      colorset === "background"
+        ? this.#backgroundColors
+        : this.#foregroundColors;
 
-    this.#setInputText(colorset, colorsToText(colors.filter((c) => c.hex !== hex)));
+    this.#setInputText(
+      colorset,
+      colorsToText(colors.filter((c) => c.hex !== hex)),
+    );
     this.#broadcastValues();
   }
 
   #sortByHexOrder(colors, order) {
-    return order.map((hex) => colors.find((c) => c.hex === hex)).filter(Boolean);
+    return order
+      .map((hex) => colors.find((c) => c.hex === hex))
+      .filter(Boolean);
   }
 
   #sortForeground(order) {
@@ -193,7 +243,9 @@ class ColorFormElement extends HTMLElement {
 
   #sortBackground(order) {
     const usesDistinctRows = this.#backgroundColors.length > 0;
-    const source = usesDistinctRows ? this.#backgroundColors : this.#foregroundColors;
+    const source = usesDistinctRows
+      ? this.#backgroundColors
+      : this.#foregroundColors;
 
     this.#setInputText(
       usesDistinctRows ? "background" : "foreground",
@@ -203,9 +255,9 @@ class ColorFormElement extends HTMLElement {
   }
 
   #toggleBackgroundInput() {
-    const label = qs("label[for='es-color-form__foreground-colors']", this);
+    const label = qs("label[for='cg-color-form__foreground-colors']", this);
     const isShowing = this.#form.classList.toggle(
-      "es-color-form--show-background-colors-input",
+      "cg-color-form--show-background-colors-input",
     );
 
     if (!isShowing) {
@@ -227,45 +279,24 @@ class ColorFormElement extends HTMLElement {
     }
   }
 
-  #restoreFromQuery(query) {
-    const params = new URLSearchParams(query);
-
-    // Only clear groups the URL actually carries, otherwise a URL saved before
-    // a field existed would leave that field with no selection at all.
-    for (const name of new Set(params.keys())) {
-      qsa(`[name="${CSS.escape(name)}"]`, this).forEach((field) => {
-        if (field.type === "checkbox" || field.type === "radio") {
-          field.checked = false;
-        }
-      });
-    }
-
+  #restoreFromQuery(params) {
     for (const [name, value] of params) {
       qsa(`[name="${CSS.escape(name)}"]`, this).forEach((field) => {
-        if (field.type === "checkbox" || field.type === "radio") {
-          field.checked ||= field.value === value;
-        } else {
-          field.value = value;
-        }
+        field.value = value;
       });
     }
   }
 
   #loadFromUrl() {
-    const query = window.location.search.slice(1);
+    const params = new URLSearchParams(window.location.search.slice(1));
 
-    if (query.length > 0) {
-      this.#restoreFromQuery(query);
-    }
+    this.#restoreFromQuery(params);
 
-    // Nothing to restore means a first visit, so show every level.
-    if (!new URLSearchParams(query).has("es-color-form__show-contrast")) {
-      qsa("input[name='es-color-form__show-contrast']", this).forEach(
-        (input) => {
-          input.checked = true;
-        },
-      );
-    }
+    // Showing everything is the default, so the URL only lists what is hidden.
+    const hidden = (params.get(HIDE_PARAM) ?? "").split(",");
+    qsa(".cg-color-form__level-toggle", this).forEach((input) => {
+      input.checked = !hidden.includes(input.dataset.level);
+    });
 
     if (this.#backgroundInput.value.length > 0) {
       this.#toggleBackgroundInput();
@@ -273,4 +304,4 @@ class ColorFormElement extends HTMLElement {
   }
 }
 
-customElements.define("es-color-form", ColorFormElement);
+customElements.define("cg-color-form", ColorFormElement);

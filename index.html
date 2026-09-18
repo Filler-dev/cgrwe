@@ -3,51 +3,37 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>EightShapes Contrast Grid</title>
-    <link href="https://fonts.googleapis.com/css?family=Lato:400,400i,700" rel="stylesheet">
+    <title>Contrast Grid</title>
     <script type="module" src="/src/main.js"></script>
 </head>
 <body>
-    <div class="es-web-tool__flex-container">
-        <div class="es-web-tool__outer-wrap">
-            <div class="es-web-tool__body">
-                <div class="es-web-tool__configurator">
-                    <div class="es-web-tool__sidebar">
-                        <h1 class="es-web-tool__title">
-                            <span class="es-web-tool__title-text">Contrast Grid</span>
-                        </h1>
-                        <es-color-form></es-color-form>
-                        <div class="es-contrast-grid-key">
-                            <div class="es-contrast-grid-key__label">
-                                <span class="es-contrast-grid__accessibility-label es-contrast-grid__accessibility-label--aaa">AAA</span> Pass, AAA (7+)
-                            </div>
-                            <div class="es-contrast-grid-key__label">
-                                <span class="es-contrast-grid__accessibility-label es-contrast-grid__accessibility-label--aa">AA</span> Pass, AA (4.5+)
-                            </div>
-                            <div class="es-contrast-grid-key__label">
-                                <span class="es-contrast-grid__accessibility-label es-contrast-grid__accessibility-label--aa18">AA18</span> Pass, Large Text Only (3+)
-                            </div>
-                            <div class="es-contrast-grid-key__label">
-                                <span class="es-contrast-grid__accessibility-label es-contrast-grid__accessibility-label--dnp">DNP</span> Does Not Pass
-                            </div>
-                            <a class="es-contrast-grid-key__link" href="https://www.w3.org/TR/UNDERSTANDING-WCAG20/visual-audio-contrast-contrast.html">About WCAG 2.0 contrast</a>
+    <div class="cg-app__flex-container">
+        <div class="cg-app__outer-wrap">
+            <div class="cg-app__configurator">
+                <div class="cg-app__sidebar">
+                    <h1 class="cg-app__title">Contrast Grid</h1>
+                    <cg-color-form></cg-color-form>
+                    <div class="cg-contrast-grid-key">
+                        <div class="cg-contrast-grid-key__label">
+                            <span class="cg-contrast-grid__accessibility-label cg-contrast-grid__accessibility-label--aaa">AAA</span> Pass, AAA (7+)
                         </div>
-                        <div class="es-web-tool__sidebar-actions">
-                            <p class="es-web-tool__legal">
-                                &copy; Copyright Eightshapes, LLC 2017-2021
-                            </p>
-                            <p class="es-web-tool__legal">
-                                Impressum: 
-                                Florian Rasch 
-                                Roswithastr. 40
-                                45131 Essen
-                                info@contrastgrid.de
-                            </p>
+                        <div class="cg-contrast-grid-key__label">
+                            <span class="cg-contrast-grid__accessibility-label cg-contrast-grid__accessibility-label--aa">AA</span> Pass, AA (4.5+)
                         </div>
+                        <div class="cg-contrast-grid-key__label">
+                            <span class="cg-contrast-grid__accessibility-label cg-contrast-grid__accessibility-label--aa18">AA18</span> Pass, Large Text Only (3+)
+                        </div>
+                        <div class="cg-contrast-grid-key__label">
+                            <span class="cg-contrast-grid__accessibility-label cg-contrast-grid__accessibility-label--dnp">DNP</span> Does Not Pass
+                        </div>
+                        <a class="cg-contrast-grid-key__link" href="https://www.w3.org/TR/UNDERSTANDING-WCAG20/visual-audio-contrast-contrast.html">About WCAG 2.0 contrast</a>
                     </div>
-                    <div class="es-web-tool__results">
-                        <es-contrast-grid></es-contrast-grid>
-                    </div>
+                    <p class="cg-app__legal">
+                        <a href="impressum.html">Impressum und Datenschutz</a>
+                    </p>
+                </div>
+                <div class="cg-app__results">
+                    <cg-contrast-grid></cg-contrast-grid>
                 </div>
             </div>
         </div>

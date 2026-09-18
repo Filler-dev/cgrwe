@@ -1,9 +1,11 @@
+import eyedropper from "bootstrap-icons/icons/eyedropper.svg?raw";
 import gripHorizontal from "bootstrap-icons/icons/grip-horizontal.svg?raw";
 import gripVertical from "bootstrap-icons/icons/grip-vertical.svg?raw";
 import xLg from "bootstrap-icons/icons/x-lg.svg?raw";
 
 const SOURCES = {
   close: xLg,
+  eyedropper,
   grip: gripVertical,
   "grip-horizontal": gripHorizontal,
 };
@@ -32,4 +34,4 @@ class IconElement extends HTMLElement {
   }
 }
 
-customElements.define("es-icon", IconElement);
+customElements.define("cg-icon", IconElement);

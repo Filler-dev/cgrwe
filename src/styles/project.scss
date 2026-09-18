@@ -1,4 +1,7 @@
 @import 'variables';
+@import '@fontsource/lato/400.css';
+@import '@fontsource/lato/400-italic.css';
+@import '@fontsource/lato/700.css';
 @import 'color_form/color_form';
 @import 'contrast_grid/contrast_grid_interactions';
 
@@ -29,9 +32,9 @@ a {
     }
 }
 
-// The icons inherit `fill` from the host element, so the existing icon classes
-// keep working when applied to <es-icon>.
-es-icon {
+// The icons inherit `fill` from the host element, so the icon classes keep
+// working when applied to <cg-icon>.
+cg-icon {
     display: inline-block;
     line-height: 0;
 
@@ -41,44 +44,32 @@ es-icon {
     }
 }
 
-.es-web-tool__flex-container {
+.cg-app__flex-container {
     display: flex;
     flex-direction: column;
 }
 
-.es-web-tool__outer-wrap {
+.cg-app__outer-wrap {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    min-height: 100vh;
+    height: 100vh;
 }
 
-.es-web-tool__header {
-    align-items: center;
-    background: $color-gray-12;
-    color: $color-white;
-    display: flex;
-    flex: none;
-    height: 92px;
-    // flex: 0 0 92px;
-    // flex-grow: 0;
-    justify-content: space-between;
-    padding: $spacing-md;
-}
-
-.es-web-tool__configurator {
+.cg-app__configurator {
     align-items: stretch;
     display: flex;
-    max-width: 100vw;
-    min-height: 100vh;
+    flex: 1;
+    min-height: 0;
 }
 
-.es-web-tool__sidebar {
+.cg-app__sidebar {
     background: $color-gray-95;
     flex: 0 0 320px;
+    overflow-y: auto;
 }
 
-.es-web-tool__title {
+.cg-app__title {
     align-items: center;
     display: flex;
     font-size: $font-size-h3;
@@ -88,53 +79,92 @@ es-icon {
     padding-bottom: 0;
 }
 
-.es-web-tool__title-text {
-    display: block;
-}
-
-.es-web-tool__results {
+.cg-app__results {
     box-shadow: $sidebar-shadow;
     flex: 1;
-    max-width: calc(100vw - 310px);
+    // Without this the grid's width keeps the flex item from shrinking, so the
+    // panel grows past the viewport and its right edge becomes unreachable.
+    min-width: 0;
+    overflow: hidden;
     padding: $spacing-default 0 $spacing-default $spacing-default;
 }
 
-.es-web-tool__sidebar-actions {
-    padding: 0 $spacing-md $spacing-md;
+// Bounded to the viewport so the grid's own scrollbars stay on screen.
+cg-contrast-grid {
+    display: block;
+    height: 100%;
 }
 
-// Grid legend, moved out of the table into the sidebar.
-.es-contrast-grid-key {
+// Grid legend, rendered in the sidebar rather than inside the table.
+.cg-contrast-grid-key {
     border-top: solid 1px darken($color-gray-95, 10%);
     color: $color-black;
     margin: 0 $spacing-md $spacing-md;
     padding-top: $spacing-md;
 }
 
-.es-contrast-grid-key__label {
+.cg-contrast-grid-key__label {
     align-items: center;
     display: flex;
     font-size: $font-size-sm;
     margin-bottom: $spacing-xs;
 
-    .es-contrast-grid__accessibility-label {
+    .cg-contrast-grid__accessibility-label {
         flex-shrink: 0;
         margin-right: $spacing-xs;
     }
 }
 
-.es-contrast-grid-key__link {
+.cg-contrast-grid-key__link {
     display: inline-block;
     font-size: $font-size-sm;
     margin-top: $spacing-xs;
 }
 
-.es-web-tool__legal {
+.cg-app__legal {
     font-size: $font-size-sm;
     margin: 0;
-    text-align: center;
+    padding: 0 $spacing-md $spacing-md;
 }
 
-// Was previously injected as an inline <style> by the code export, so it has to
-// stay last in the cascade.
+// Standalone document pages such as the Impressum.
+.cg-page {
+    line-height: 1.6;
+    margin: 0 auto;
+    max-width: 720px;
+    padding: $spacing-default $spacing-md;
+}
+
+.cg-page__title {
+    font-size: $font-size-h3;
+    font-weight: 300;
+    margin: 0 0 $spacing-default;
+}
+
+.cg-page__section {
+    border-bottom: solid 1px darken($color-gray-95, 10%);
+    font-size: $font-size-lg;
+    font-weight: 300;
+    margin: $spacing-default 0 $spacing-stack-default;
+    padding-bottom: $spacing-xs;
+}
+
+.cg-page__heading {
+    font-size: $font-size-default;
+    font-weight: bold;
+    margin: $spacing-md 0 $spacing-xs;
+}
+
+.cg-page__text {
+    font-size: $font-size-default;
+    margin: 0;
+}
+
+.cg-page__back {
+    border-top: solid 1px darken($color-gray-95, 10%);
+    margin-top: $spacing-default;
+    padding-top: $spacing-stack-default;
+}
+
+// Loaded last so it keeps overriding the interaction styles above.
 @import 'contrast_grid/contrast_grid';

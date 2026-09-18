@@ -30,9 +30,9 @@ class ContrastGridElement extends HTMLElement {
   connectedCallback() {
     this.innerHTML = template;
 
-    this.#grid = qs(".es-contrast-grid", this);
-    this.#gridContent = qs(".es-contrast-grid__content", this);
-    this.#foregroundKey = qs(".es-contrast-grid__foreground-key", this);
+    this.#grid = qs(".cg-contrast-grid", this);
+    this.#gridContent = qs(".cg-contrast-grid__content", this);
+    this.#foregroundKey = qs(".cg-contrast-grid__foreground-key", this);
 
     this.#takeTemplates();
     this.#bindEvents();
@@ -42,9 +42,9 @@ class ContrastGridElement extends HTMLElement {
   addAccessibilityToSwatches() {
     const shown = this.#getVisibleLevels();
 
-    qsa(".es-contrast-grid__swatch", this).forEach((swatch) => {
+    qsa(".cg-contrast-grid__swatch", this).forEach((swatch) => {
       const contrast = parseFloat(
-        qs(".es-contrast-grid__contrast-ratio", swatch).textContent,
+        qs(".cg-contrast-grid__contrast-ratio", swatch).textContent,
       );
 
       let level = "DNP";
@@ -58,10 +58,10 @@ class ContrastGridElement extends HTMLElement {
 
       swatch.style.display = shown[level] ? "" : "none";
 
-      const pill = qs(".es-contrast-grid__accessibility-label", swatch);
+      const pill = qs(".cg-contrast-grid__accessibility-label", swatch);
       pill.textContent = level;
       pill.classList.add(
-        "es-contrast-grid__accessibility-label--" + level.toLowerCase(),
+        "cg-contrast-grid__accessibility-label--" + level.toLowerCase(),
       );
     });
   }
@@ -75,11 +75,11 @@ class ContrastGridElement extends HTMLElement {
       return clone;
     };
 
-    this.#contentCellTemplate = take("es-contrast-grid__content-cell-template");
+    this.#contentCellTemplate = take("cg-contrast-grid__content-cell-template");
     this.#foregroundKeyCellTemplate = take(
-      "es-contrast-grid__foreground-key-cell-template",
+      "cg-contrast-grid__foreground-key-cell-template",
     );
-    this.#contentRowTemplate = take("es-contrast-grid__content-row-template");
+    this.#contentRowTemplate = take("cg-contrast-grid__content-row-template");
   }
 
   #bindEvents() {
@@ -89,7 +89,7 @@ class ContrastGridElement extends HTMLElement {
     delegate(
       this,
       "click",
-      ".es-contrast-grid__key-swatch-remove",
+      ".cg-contrast-grid__key-swatch-remove",
       (event, action) => {
         event.preventDefault();
         emit(EVENTS.removeColor, action.dataset.hex, action.dataset.colorset);
@@ -100,8 +100,8 @@ class ContrastGridElement extends HTMLElement {
   #enableDragUi() {
     const shared = {
       animation: 150,
-      ghostClass: "escg-drag-placeholder",
-      dragClass: "escg-drag-helper",
+      ghostClass: "cg-drag-placeholder",
+      dragClass: "cg-drag-helper",
       fallbackOnBody: true,
     };
 
@@ -113,22 +113,22 @@ class ContrastGridElement extends HTMLElement {
     Sortable.create(this.#gridContent, {
       ...shared,
       direction: "vertical",
-      draggable: ".es-contrast-grid__content-row",
-      handle: ".es-contrast-grid__key-swatch-drag-handle--row",
+      draggable: ".cg-contrast-grid__content-row",
+      handle: ".cg-contrast-grid__key-swatch-drag-handle--row",
       onEnd: () => broadcast(EVENTS.rowsSorted, "background"),
     });
 
     Sortable.create(this.#foregroundKey, {
       ...shared,
       direction: "horizontal",
-      draggable: ".es-contrast-grid__foreground-key-cell",
-      handle: ".es-contrast-grid__key-swatch-drag-handle--column",
+      draggable: ".cg-contrast-grid__foreground-key-cell",
+      handle: ".cg-contrast-grid__key-swatch-drag-handle--column",
       onEnd: () => broadcast(EVENTS.columnsSorted, "foreground"),
     });
   }
 
   #extractColors(colorset) {
-    return qsa(`.es-contrast-grid__key-swatch--${colorset}`, this).map(
+    return qsa(`.cg-contrast-grid__key-swatch--${colorset}`, this).map(
       (swatch) => swatch.dataset.hex,
     );
   }
@@ -147,20 +147,20 @@ class ContrastGridElement extends HTMLElement {
     swatch.style.backgroundColor = hex;
     swatch.dataset.hex = hex;
 
-    const removeAction = qs(".es-contrast-grid__key-swatch-remove", swatch);
+    const removeAction = qs(".cg-contrast-grid__key-swatch-remove", swatch);
     removeAction.dataset.hex = hex;
     removeAction.dataset.colorset = colorset;
 
     return {
-      text: qs(".es-contrast-grid__key-swatch-label-text", swatch),
-      hex: qs(".es-contrast-grid__key-swatch-label-hex", swatch),
+      text: qs(".cg-contrast-grid__key-swatch-label-text", swatch),
+      hex: qs(".cg-contrast-grid__key-swatch-label-hex", swatch),
     };
   }
 
   #generateForegroundKey() {
     for (const color of this.#getForegroundColors()) {
       const cell = this.#foregroundKeyCellTemplate.cloneNode(true);
-      const swatch = qs(".es-contrast-grid__key-swatch", cell);
+      const swatch = qs(".cg-contrast-grid__key-swatch", cell);
       const label = color.label ?? color.hex;
       const labels = this.#fillKeySwatch(swatch, color.hex, "foreground");
 
@@ -182,7 +182,7 @@ class ContrastGridElement extends HTMLElement {
 
     for (const background of this.#getBackgroundColors()) {
       const row = this.#contentRowTemplate.cloneNode(true);
-      const swatch = qs(".es-contrast-grid__key-swatch", row);
+      const swatch = qs(".cg-contrast-grid__key-swatch", row);
       const label = background.label ?? background.hex;
       const labels = this.#fillKeySwatch(swatch, background.hex, "background");
 
@@ -196,10 +196,10 @@ class ContrastGridElement extends HTMLElement {
 
         if (background.hex === foreground.hex) {
           const spacer = document.createElement("div");
-          spacer.className = "es-contrast-grid__swatch-spacer";
+          spacer.className = "cg-contrast-grid__swatch-spacer";
           cell.replaceChildren(spacer);
         } else {
-          const tile = qs(".es-contrast-grid__swatch", cell);
+          const tile = qs(".cg-contrast-grid__swatch", cell);
           tile.style.backgroundColor = background.hex;
           tile.style.color = foreground.hex;
         }
@@ -212,13 +212,13 @@ class ContrastGridElement extends HTMLElement {
   }
 
   #getVisibleLevels() {
-    const group = qs(".es-color-form__checkbox-group");
+    const group = qs(".cg-color-form__checkbox-group");
 
     return {
-      AAA: !!qs("#es-color-form__show-contrast--aaa:checked", group),
-      AA: !!qs("#es-color-form__show-contrast--aa:checked", group),
-      AA18: !!qs("#es-color-form__show-contrast--aa18:checked", group),
-      DNP: !!qs("#es-color-form__show-contrast--dnp:checked", group),
+      AAA: !!qs("#cg-color-form__show-contrast--aaa:checked", group),
+      AA: !!qs("#cg-color-form__show-contrast--aa:checked", group),
+      AA18: !!qs("#cg-color-form__show-contrast--aa18:checked", group),
+      DNP: !!qs("#cg-color-form__show-contrast--dnp:checked", group),
     };
   }
 
@@ -227,20 +227,20 @@ class ContrastGridElement extends HTMLElement {
 
     if (contrastWithWhite === 1) {
       element.classList.add(
-        "es-contrast-grid--bordered-swatch",
-        "es-contrast-grid--dark-label",
+        "cg-contrast-grid--bordered-swatch",
+        "cg-contrast-grid--dark-label",
       );
     } else if (contrastWithWhite < 4.0) {
-      element.classList.add("es-contrast-grid--dark-label");
+      element.classList.add("cg-contrast-grid--dark-label");
     }
   }
 
   #addContrastToSwatches() {
-    qsa(".es-contrast-grid__swatch", this).forEach((swatch) => {
+    qsa(".cg-contrast-grid__swatch", this).forEach((swatch) => {
       const styles = getComputedStyle(swatch);
       const backgroundColor = cssColorToHex(styles.backgroundColor);
 
-      qs(".es-contrast-grid__contrast-ratio", swatch).textContent =
+      qs(".cg-contrast-grid__contrast-ratio", swatch).textContent =
         getContrastRatioForHex(cssColorToHex(styles.color), backgroundColor);
 
       this.#markDarkLabel(swatch, backgroundColor);
@@ -248,7 +248,7 @@ class ContrastGridElement extends HTMLElement {
   }
 
   #setKeySwatchLabelColors() {
-    qsa(".es-contrast-grid__key-swatch", this).forEach((swatch) =>
+    qsa(".cg-contrast-grid__key-swatch", this).forEach((swatch) =>
       this.#markDarkLabel(
         swatch,
         cssColorToHex(getComputedStyle(swatch).backgroundColor),
@@ -260,7 +260,7 @@ class ContrastGridElement extends HTMLElement {
     const twoDecimals = /[\d]*.[\d][\d]/;
     const dotZero = /[\d]*.0/;
 
-    qsa(".es-contrast-grid__contrast-ratio", this).forEach((ratio) => {
+    qsa(".cg-contrast-grid__contrast-ratio", this).forEach((ratio) => {
       let value = ratio.textContent;
       if (twoDecimals.exec(value) === null) {
         return;
@@ -280,14 +280,14 @@ class ContrastGridElement extends HTMLElement {
       this.#gridData.backgroundColors.length <= 1;
 
     this.#grid.classList.toggle(
-      "es-contrast-grid--row-and-column-removal-disabled",
+      "cg-contrast-grid--row-and-column-removal-disabled",
       singleColor,
     );
   }
 
   #reset() {
-    qsa(".es-contrast-grid__content-row", this).forEach((row) => row.remove());
-    qsa(".es-contrast-grid__foreground-key-cell", this).forEach((cell) =>
+    qsa(".cg-contrast-grid__content-row", this).forEach((row) => row.remove());
+    qsa(".cg-contrast-grid__foreground-key-cell", this).forEach((cell) =>
       cell.remove(),
     );
   }
@@ -314,4 +314,4 @@ class ContrastGridElement extends HTMLElement {
   }
 }
 
-customElements.define("es-contrast-grid", ContrastGridElement);
+customElements.define("cg-contrast-grid", ContrastGridElement);

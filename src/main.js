@@ -6,4 +6,4 @@ import "./components/contrast_grid/contrast_grid.js";
 import "./components/color_form/color_form.js";
 import { qs } from "./scripts/dom.js";
 
-qs("es-color-form").start();
+qs("cg-color-form").start();

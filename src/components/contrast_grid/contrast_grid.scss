@@ -1,30 +1,23 @@
 @import '../../styles/variables';
 
-/* Override Contrast Grid Styles to make color and font changes */
-.es-contrast-grid {
-    font-family: 'Lato', sans-serif;
-}
-
-.es-contrast-grid {
+.cg-contrast-grid {
     --swatch-size: #{$default-swatch-size};
     --swatch-padding: calc(var(--swatch-size) / 12);
 
     box-sizing: border-box;
+    font-family: 'Lato', sans-serif;
+    height: 100%;
     overflow: auto;
     width: 100%;
 
     *,
     *:before,
     *:after {
-      box-sizing: inherit;
+        box-sizing: inherit;
     }
 }
 
-.es-contrast-grid__table-wrap {
-    width: auto;
-}
-
-.es-contrast-grid__table {
+.cg-contrast-grid__table {
     border-collapse: collapse;
     color: #fff;
 
@@ -36,11 +29,57 @@
     }
 }
 
-.es-contrast-grid--dark-label {
+// Keeps both key axes in view while scrolling the grid. The stacking order has
+// to be explicit: without it the row keys would paint over the column keys,
+// since tbody follows thead.
+$key-divider: $color-gray-53;
+$key-divider-shadow: rgba($color-black, .28);
+
+.cg-contrast-grid__foreground-key th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+}
+
+.cg-contrast-grid__background-key-cell {
+    left: 0;
+    position: sticky;
+    z-index: 2;
+}
+
+.cg-contrast-grid__foreground-key th:first-child {
+    left: 0;
+    z-index: 4;
+}
+
+// A cell of a border-collapse table never paints a box-shadow, so the dividers
+// go on the inner swatches. The soft edge reads as "content slides under
+// here", which keeps a half-covered tile from looking like a glitch.
+.cg-contrast-grid__key-swatch--foreground {
+    box-shadow: 0 1px 0 $key-divider, 0 5px 6px -3px $key-divider-shadow;
+}
+
+.cg-contrast-grid__key-swatch--background {
+    box-shadow: 1px 0 0 $key-divider, 5px 0 6px -3px $key-divider-shadow;
+}
+
+.cg-contrast-grid__key-swatch-spacer {
+    box-shadow:
+        1px 0 0 $key-divider,
+        0 1px 0 $key-divider,
+        5px 0 6px -3px $key-divider-shadow,
+        0 5px 6px -3px $key-divider-shadow;
+}
+
+.cg-contrast-grid--dark-label {
     color: black;
 }
 
-.es-contrast-grid__accessibility-label {
+.cg-contrast-grid--bordered-swatch {
+    border: solid 1px $color-gray-95;
+}
+
+.cg-contrast-grid__accessibility-label {
     background: #ccc;
     border-radius: 4px;
     display: inline-block;
@@ -51,16 +90,16 @@
     width: 36px;
 }
 
-.es-contrast-grid__accessibility-label--dnp {
+.cg-contrast-grid__accessibility-label--dnp {
     background: #EE0000;
     color: $color-white;
 }
 
-.es-contrast-grid__accessibility-label--aa18 {
+.cg-contrast-grid__accessibility-label--aa18 {
     background: #CFB317;
 }
 
-.es-contrast-grid__swatch {
+.cg-contrast-grid__swatch {
     display: flex;
     flex-direction: column;
     height: var(--swatch-size);
@@ -69,28 +108,35 @@
     min-width: var(--swatch-size);
 }
 
-.es-contrast-grid__swatch-demo-text {
+.cg-contrast-grid__swatch-demo-text {
     font-size: $font-size-default;
 }
 
-.es-contrast-grid__swatch-stats {
+.cg-contrast-grid__swatch-stats {
     align-items: center;
     display: flex;
     justify-content: space-between;
 }
 
-.es-contrast-grid__contrast-ratio {
+.cg-contrast-grid__contrast-ratio {
     color: $color-white;
     font-size: $font-size-sm;
 
-    .es-contrast-grid--dark-label & {
+    .cg-contrast-grid--dark-label & {
         color: $color-black;
     }
 }
 
-.es-contrast-grid__key-swatch-spacer {
+.cg-contrast-grid__swatch-spacer {
+    background-color: $color-white;
+    border: solid 1px $color-gray-95;
+    height: var(--swatch-size);
+    width: 100%;
+}
+
+.cg-contrast-grid__key-swatch-spacer {
     align-items: center;
-    background: 
+    background:
          linear-gradient(to top right,
              rgba($color-gray-95,0) 0%,
              rgba($color-gray-95,0) calc(50% - 1px),
@@ -107,18 +153,11 @@
     min-width: 150px;
 }
 
-.es-contrast-grid__key-swatch-label--background {
+.cg-contrast-grid__key-swatch-label--background {
     align-self: flex-end;
 }
 
-.es-contrast-grid__swatch-spacer {
-    background-color: $color-white;
-    border: solid 1px $color-gray-95;
-    height: var(--swatch-size);
-    width: 100%;
-}
-
-.es-contrast-grid__key-swatch--foreground {
+.cg-contrast-grid__key-swatch--foreground {
     align-items: center;
     display: flex;
     flex-direction: column;
@@ -128,7 +167,7 @@
     padding: var(--swatch-padding);
     text-align: left;
 
-    .es-contrast-grid__key-swatch-label-text {
+    .cg-contrast-grid__key-swatch-label-text {
         overflow: hidden;
         text-overflow: ellipsis;
         max-width: 220px;
@@ -136,11 +175,7 @@
     }
 }
 
-.es-contrast-grid--bordered-swatch {
-    border: solid 1px $color-gray-95;
-}
-
-.es-contrast-grid__key-swatch--background {
+.cg-contrast-grid__key-swatch--background {
     align-items: center;
     display: flex;
     height: var(--swatch-size);
@@ -149,11 +184,11 @@
     min-width: 150px;
 }
 
-.es-contrast-grid__key-swatch-label-text {
+.cg-contrast-grid__key-swatch-label-text {
     font-weight: bold;
 }
 
-.es-contrast-grid__key-swatch-label-hex {
+.cg-contrast-grid__key-swatch-label-hex {
     font-weight: normal;
     font-size: $font-size-sm;
 }

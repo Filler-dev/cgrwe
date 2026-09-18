@@ -1,47 +1,100 @@
-.es-color-form {
+.cg-color-form {
     padding: $spacing-md $spacing-md 0;
 }
 
-.es-color-form__title {
-    margin: 0;
+.cg-color-form__content {
+    margin-bottom: $spacing-default;
 }
 
-.es-color-form__textarea {
-    border-radius: $spacing-xs / 2;
-    border: solid 1px $color-gray-53;
-    font-family: 'Lato', sans-serif; 
+.cg-color-form__copy {
     font-size: $font-size-default;
-    height: 200px;
-    padding: $spacing-xs;
-    margin-bottom: $spacing-sm;
-    width: 100%;
+    margin: 0 0 $spacing-stack-default;
+}
 
-    &[disabled] {
-        color: $color-gray-53;
-        cursor: not-allowed;
-        font-style: italic;
+.cg-color-form__field-wrapper {
+    margin-bottom: $spacing-md;
+}
+
+.cg-color-form__eyedropper {
+    align-items: center;
+    background: none;
+    border: 0;
+    color: $color-link;
+    cursor: pointer;
+    display: flex;
+    font-family: 'Lato', sans-serif;
+    font-size: $font-size-sm;
+    gap: $spacing-xs / 2;
+    margin-bottom: $spacing-xs;
+    padding: 0;
+    width: fit-content;
+
+    &:hover {
+        color: $color-link-hover;
+        text-decoration: underline;
+    }
+
+    // `display` above would otherwise defeat the hidden attribute.
+    &[hidden] {
+        display: none;
     }
 }
 
-.es-color-form__label {
+.cg-color-form__eyedropper-icon {
+    height: $font-size-default;
+    width: $font-size-default;
+}
+
+.cg-color-form__label {
     display: block;
     font-weight: bold;
     margin-bottom: $spacing-sm;
 }
 
-.es-color-form__range-group {
+.cg-color-form__textarea {
+    border-radius: $spacing-xs / 2;
+    border: solid 1px $color-gray-53;
+    font-family: 'Lato', sans-serif;
+    font-size: $font-size-default;
+    height: 200px;
+    padding: $spacing-xs;
+    margin-bottom: $spacing-sm;
+    width: 100%;
+}
+
+.cg-color-form__field-wrapper--background-colors {
+    display: none;
+
+    .cg-color-form--show-background-colors-input & {
+        display: block;
+    }
+}
+
+.cg-color-form--show-background-colors-input .cg-color-form__show-background-colors {
+    display: none;
+}
+
+.cg-color-form__hide-background-colors {
+    display: none;
+
+    .cg-color-form--show-background-colors-input & {
+        display: block;
+    }
+}
+
+.cg-color-form__range-group {
     align-items: center;
     display: flex;
     gap: $spacing-xs;
 }
 
-.es-color-form__range {
+.cg-color-form__range {
     accent-color: $color-link;
     flex: 1;
     min-width: 0;
 }
 
-.es-color-form__number {
+.cg-color-form__number {
     border: solid 1px $color-gray-53;
     border-radius: $spacing-xs / 2;
     font-family: 'Lato', sans-serif;
@@ -50,38 +103,41 @@
     width: 60px;
 }
 
-.es-color-form__unit {
+.cg-color-form__unit {
     color: $color-gray-30;
     font-size: $font-size-sm;
 }
 
-.es-color-form__field-wrapper {
-    margin-bottom: $spacing-md;
+.cg-color-form__radio-button-group {
+    align-items: center;
+    display: flex;
+    width: 100%;
 }
 
-.es-color-form__copy {
-    font-size: $font-size-default;
-    margin: 0 0 $spacing-stack-default;
+.cg-color-form__checkbox-group {
+    padding-bottom: 1rem;
 }
 
-.es-color-form__radio-button {
+.cg-color-form__radio-button {
     display: block;
     font-weight: 400;
     margin-bottom: $spacing-sm;
+    // Contains the visually hidden input, which would otherwise anchor to the
+    // viewport and add scrollable page height.
+    position: relative;
     text-align: center;
     width: 33.3333333%;
-
-    input[disabled] {
-        &,
-        + .es-color-form__radio-button-text {
-            color: $color-gray-53;
-            cursor: not-allowed;
-            font-style: italic;
-        }
-    }
 }
 
-.es-color-form__radio-button-text {
+// Hidden without `visibility`, which would drop it out of the tab order.
+.cg-color-form__radio-button-input {
+    clip-path: inset(50%);
+    height: 1px;
+    position: absolute;
+    width: 1px;
+}
+
+.cg-color-form__radio-button-text {
     background-color: darken($color-gray-95, 10%);
     border-right: solid 1px $color-gray-53;
     color: $color-black;
@@ -91,63 +147,23 @@
     padding: $spacing-xs;
     width: 100%;
 
-    .es-color-form__radio-button-input:checked + & {
+    .cg-color-form__radio-button-input:checked + & {
         background-color: $color-gray-30;
         box-shadow: inset 0 0 5px rgba($color-black, 0.5);
         color: $color-white;
     }
 
-    .es-color-form__radio-button:last-child & {
+    .cg-color-form__radio-button-input:focus-visible + & {
+        outline: 2px solid $color-link;
+        outline-offset: -2px;
+    }
+
+    .cg-color-form__radio-button:last-child & {
         border-radius: 0 $border-radius-default $border-radius-default 0;
         border-right: 0;
     }
 
-    .es-color-form__radio-button:first-child & {
+    .cg-color-form__radio-button:first-child & {
         border-radius: $border-radius-default 0 0 $border-radius-default;
     }
-}
-
-.es-color-form__content {
-    margin-bottom: $spacing-default;
-}
-
-.es-color-form__field-wrapper--background-colors {
-    display: none;
-
-    .es-color-form--show-background-colors-input & {
-        display: block;
-    }
-}
-
-.es-color-form--show-background-colors-input .es-color-form__show-background-colors {
-    display: none;
-}
-
-.es-color-form__hide-background-colors {
-    display: none;
-
-    .es-color-form--show-background-colors-input & {
-        display: block;
-    }
-}
-
-.es-color-form__radio-button-group {
-    align-items: center;
-    display: flex;
-    width: 100%;
-}
-
-.es-color-form__checkbox-group {
-  padding-bottom: 1rem; 
-}
-
-
-.es-color-form__radio-button-subtext {
-    display: block;
-    font-size: $font-size-xs;
-}
-
-.es-color-form__radio-button-input {
-    position: absolute;
-    visibility: hidden;
 }
