@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Test many foreground and background color combos for compliance with WCAG 2.0 minimum contrast.",
+  "description": "Test many foreground and background color combos for compliance with WCAG 2.2 minimum contrast.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
