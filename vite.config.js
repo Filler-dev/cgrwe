@@ -83,8 +83,6 @@ export default defineConfig({
     postcss: { plugins: [autoprefixer()] },
   },
   build: {
-    outDir: "docs",
-    emptyOutDir: true,
     rollupOptions: {
       input: {
         main: resolve(root, "index.html"),
