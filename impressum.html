@@ -9,9 +9,9 @@
 </head>
 <body>
     <!--
-        ACHTUNG: Alle mit [ ] markierten Angaben vor dem Veröffentlichen durch
-        die echten Daten ersetzen. Eine Postfachadresse genügt nicht, es muss
-        eine ladungsfähige Anschrift sein.
+        Die Angaben kommen beim Deploy aus den Repository-Variablen IMPRINT_*,
+        lokal aus den Platzhaltern in .env. Eine Postfachadresse genügt nicht,
+        es muss eine ladungsfähige Anschrift sein.
     -->
     <main class="cg-page">
         <h1 class="cg-page__title">Impressum und Datenschutz</h1>
@@ -20,15 +20,15 @@
 
         <h3 class="cg-page__heading">Angaben gemäß § 5 DDG</h3>
         <p class="cg-page__text">
-            [Vorname Nachname]<br>
-            [Straße und Hausnummer]<br>
-            [PLZ und Ort]<br>
+            %VITE_IMPRINT_NAME%<br>
+            %VITE_IMPRINT_STREET%<br>
+            %VITE_IMPRINT_CITY%<br>
             Deutschland
         </p>
 
         <h3 class="cg-page__heading">Kontakt</h3>
         <p class="cg-page__text">
-            E-Mail: <a href="mailto:[E-Mail-Adresse]">[E-Mail-Adresse]</a>
+            E-Mail: <a href="mailto:%VITE_IMPRINT_EMAIL%">%VITE_IMPRINT_EMAIL%</a>
         </p>
 
         <h2 class="cg-page__section">Datenschutzerklärung</h2>
