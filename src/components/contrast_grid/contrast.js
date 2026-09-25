@@ -30,7 +30,7 @@ function hexToRgb(hex) {
 
 function toLinearChannel(value) {
   const srgb = value / 255;
-  return srgb <= 0.03928
+  return srgb <= 0.04045
     ? srgb / 12.92
     : Math.pow((srgb + 0.055) / 1.055, 2.4);
 }
@@ -50,5 +50,6 @@ export function getContrastRatioForHex(foregroundColor, backgroundColor) {
   const lighter = Math.max(a, b);
   const darker = Math.min(a, b);
 
-  return Math.round(((lighter + 0.05) / (darker + 0.05)) * 100) / 100;
+  // Floor, not round: WCAG forbids rounding up to a threshold. The epsilon absorbs float error.
+  return Math.floor(((lighter + 0.05) / (darker + 0.05)) * 100 + 1e-9) / 100;
 }

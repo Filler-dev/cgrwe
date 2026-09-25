@@ -90,12 +90,12 @@ $key-divider-shadow: rgba($color-black, .28);
     width: 36px;
 }
 
-.cg-contrast-grid__accessibility-label--dnp {
+.cg-contrast-grid__accessibility-label--fail {
     background: #EE0000;
     color: $color-white;
 }
 
-.cg-contrast-grid__accessibility-label--aa18 {
+.cg-contrast-grid__accessibility-label--large {
     background: #CFB317;
 }
 
@@ -115,6 +115,7 @@ $key-divider-shadow: rgba($color-black, .28);
 .cg-contrast-grid__swatch-stats {
     align-items: center;
     display: flex;
+    gap: 4px;
     justify-content: space-between;
 }
 

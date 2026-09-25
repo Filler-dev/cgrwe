@@ -4,19 +4,6 @@ import { EVENTS, emit, on } from "../../scripts/events.js";
 import { cssColorToHex, getContrastRatioForHex } from "./contrast.js";
 import template from "./contrast_grid.html?raw";
 
-const DEFAULT_GRID_DATA = {
-  foregroundColors: [
-    { hex: "#000", label: "Black" },
-    { hex: "#323232" },
-    { hex: "#4D4D4D" },
-    { hex: "#F3F1F1" },
-    { hex: "#FFF", label: "White" },
-    { hex: "#DC6729" },
-    { hex: "#3995A9", label: "Link Color" },
-  ],
-  backgroundColors: [],
-};
-
 class ContrastGridElement extends HTMLElement {
   #grid;
   #gridContent;
@@ -25,7 +12,7 @@ class ContrastGridElement extends HTMLElement {
   #contentRowTemplate;
   #contentCellTemplate;
   #showLabelsOnColumnKeys = false;
-  #gridData = DEFAULT_GRID_DATA;
+  #gridData;
 
   connectedCallback() {
     this.innerHTML = template;
@@ -47,13 +34,13 @@ class ContrastGridElement extends HTMLElement {
         qs(".cg-contrast-grid__contrast-ratio", swatch).textContent,
       );
 
-      let level = "DNP";
+      let level = "Fail";
       if (contrast >= 7.0) {
         level = "AAA";
       } else if (contrast >= 4.5) {
         level = "AA";
       } else if (contrast >= 3.0) {
-        level = "AA18";
+        level = "Large";
       }
 
       swatch.style.display = shown[level] ? "" : "none";
@@ -217,8 +204,8 @@ class ContrastGridElement extends HTMLElement {
     return {
       AAA: !!qs("#cg-color-form__show-contrast--aaa:checked", group),
       AA: !!qs("#cg-color-form__show-contrast--aa:checked", group),
-      AA18: !!qs("#cg-color-form__show-contrast--aa18:checked", group),
-      DNP: !!qs("#cg-color-form__show-contrast--dnp:checked", group),
+      Large: !!qs("#cg-color-form__show-contrast--large:checked", group),
+      Fail: !!qs("#cg-color-form__show-contrast--fail:checked", group),
     };
   }
 
@@ -256,24 +243,6 @@ class ContrastGridElement extends HTMLElement {
     );
   }
 
-  #truncateContrastDisplayValues() {
-    const twoDecimals = /[\d]*.[\d][\d]/;
-    const dotZero = /[\d]*.0/;
-
-    qsa(".cg-contrast-grid__contrast-ratio", this).forEach((ratio) => {
-      let value = ratio.textContent;
-      if (twoDecimals.exec(value) === null) {
-        return;
-      }
-
-      value = value.slice(0, -1);
-      if (dotZero.exec(value) !== null) {
-        value = value.slice(0, -2);
-      }
-      ratio.textContent = value;
-    });
-  }
-
   #setGridUiStatus() {
     const singleColor =
       this.#gridData.foregroundColors.length <= 1 &&
@@ -298,7 +267,6 @@ class ContrastGridElement extends HTMLElement {
     this.#addContrastToSwatches();
     this.addAccessibilityToSwatches();
     this.#setKeySwatchLabelColors();
-    this.#truncateContrastDisplayValues();
     this.#setGridUiStatus();
   }
 

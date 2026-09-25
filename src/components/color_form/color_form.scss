@@ -9,6 +9,10 @@
 .cg-color-form__copy {
     font-size: $font-size-default;
     margin: 0 0 $spacing-stack-default;
+
+    code {
+        white-space: nowrap;
+    }
 }
 
 .cg-color-form__field-wrapper {

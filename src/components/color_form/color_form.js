@@ -2,7 +2,15 @@ import { qs, qsa, debounce } from "../../scripts/dom.js";
 import { EVENTS, emit, on } from "../../scripts/events.js";
 import template from "./color_form.html?raw";
 
-const HEX_REGEX = /^(#?[A-Fa-f0-9]{6}|#?[A-Fa-f0-9]{3})(,.*)?/gim;
+const BARE_HEX = /^[0-9a-f]{3}([0-9a-f]{3})?$/i;
+
+// Valid CSS, but the result depends on context or theme rather than the input.
+const CONTEXT_DEPENDENT =
+  /^(currentcolor|light-dark\(.*|accentcolor|accentcolortext|activetext|buttonborder|buttonface|buttontext|canvas|canvastext|field|fieldtext|graytext|highlight|highlighttext|linktext|mark|marktext|selecteditem|selecteditemtext|visitedtext)$/i;
+
+const pixel = new OffscreenCanvas(1, 1).getContext("2d", {
+  willReadFrequently: true,
+});
 
 const HIDE_PARAM = "hide";
 
@@ -21,28 +29,48 @@ function normalizeTileSize(raw) {
   return Math.min(MAX_TILE_SIZE, Math.max(MIN_TILE_SIZE, Math.round(value)));
 }
 
+// Painting a pixel converts any CSS color, including oklch() or color-mix(), to sRGB.
+function toHex(input) {
+  const color = BARE_HEX.test(input) ? "#" + input : input;
+  if (CONTEXT_DEPENDENT.test(color) || !CSS.supports("color", color)) {
+    return null;
+  }
+
+  // A value the canvas cannot parse is ignored, which leaves the pixel transparent.
+  pixel.clearRect(0, 0, 1, 1);
+  pixel.fillStyle = "transparent";
+  pixel.fillStyle = color;
+  pixel.fillRect(0, 0, 1, 1);
+  const [r, g, b, a] = pixel.getImageData(0, 0, 1, 1).data;
+
+  // The contrast of a translucent color depends on what lies beneath it.
+  if (a < 255) {
+    return null;
+  }
+
+  return (
+    "#" +
+    [r, g, b]
+      .map((value) => value.toString(16).padStart(2, "0"))
+      .join("")
+      .toUpperCase()
+  );
+}
+
 function parseColorInput(value) {
   const seen = new Set();
   const colors = [];
-  let match;
 
-  HEX_REGEX.lastIndex = 0;
-  while ((match = HEX_REGEX.exec(value)) !== null) {
-    if (match.index === HEX_REGEX.lastIndex) {
-      HEX_REGEX.lastIndex++;
-    }
-
-    const hex = (
-      match[1].startsWith("#") ? match[1] : "#" + match[1]
-    ).toUpperCase();
-    if (seen.has(hex)) {
+  for (const line of value.split("\n")) {
+    // No CSS color contains a semicolon, so commas stay free for rgb() and labels.
+    const [source, label] = line.split(/;(.*)/).map((part) => part?.trim());
+    const hex = source && toHex(source);
+    if (!hex || seen.has(hex)) {
       continue;
     }
     seen.add(hex);
 
-    // The regex captures the leading comma along with the label.
-    const label = match[2]?.slice(1).trim();
-    colors.push(label ? { hex, label } : { hex });
+    colors.push(label ? { hex, source, label } : { hex, source });
   }
 
   return colors;
@@ -51,7 +79,9 @@ function parseColorInput(value) {
 function colorsToText(colors) {
   return colors
     .map((color) =>
-      color.label ? `${color.hex}, ${color.label}\n` : `${color.hex}\n`,
+      color.label
+        ? `${color.source}; ${color.label}\n`
+        : `${color.source}\n`,
     )
     .join("");
 }
