@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Contrast Grid</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <script type="module" src="/src/main.js"></script>
+</head>
+<body>
+    <a class="cg-skip-link" href="#cg-results">Skip to contrast grid</a>
+    <main class="cg-app">
+        <div class="cg-app__sidebar">
+            <h1 class="cg-app__title">Contrast Grid</h1>
+            <cg-color-form></cg-color-form>
+            <nav class="cg-app__legal" aria-label="Contact and legal">
+                <a class="cg-app__feedback" href="mailto:%VITE_FEEDBACK_EMAIL%" data-address="%VITE_FEEDBACK_EMAIL%">Feedback &amp; bug reports</a>
+                <a href="impressum.html" lang="de">Impressum und Datenschutz</a>
+            </nav>
+        </div>
+        <section id="cg-results" class="cg-app__results" aria-label="Contrast grid" tabindex="-1">
+            <cg-contrast-grid></cg-contrast-grid>
+        </section>
+    </main>
+</body>
+</html>

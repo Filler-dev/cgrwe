@@ -1,0 +1,441 @@
+import { qs, qsa, delegate } from "../../scripts/dom.js";
+import { EVENTS, emit, on } from "../../scripts/events.js";
+import {
+  getContrastRatioForHex,
+  getLevel,
+} from "../../color/contrast.js";
+import { getNextLevel, suggestTextColor } from "../../color/suggest.js";
+import template from "./contrast_grid.html?raw";
+
+const COPIED_FEEDBACK_MS = 1500;
+
+const MOVE_STEPS = { left: -1, up: -1, right: 1, down: 1 };
+
+const DRAG_AXES = {
+  column: {
+    item: ".cg-contrast-grid__foreground-key-cell",
+    colorset: "foreground",
+    event: EVENTS.foregroundSorted,
+    horizontal: true,
+  },
+  row: {
+    item: ".cg-contrast-grid__content-row",
+    colorset: "background",
+    event: EVENTS.backgroundSorted,
+    horizontal: false,
+  },
+};
+
+const AUTOSCROLL_EDGE = 40;
+const AUTOSCROLL_STEP = 12;
+
+class ContrastGridElement extends HTMLElement {
+  #grid;
+  #gridContent;
+  #foregroundKey;
+  #status;
+  #foregroundKeyCellTemplate;
+  #contentRowTemplate;
+  #contentCellTemplate;
+  #showLabelsOnColumnKeys = false;
+  #colors;
+  #hiddenLevels = new Set();
+
+  connectedCallback() {
+    this.innerHTML = template;
+
+    this.#grid = qs(".cg-contrast-grid", this);
+    this.#gridContent = qs(".cg-contrast-grid__content", this);
+    this.#foregroundKey = qs(".cg-contrast-grid__foreground-key", this);
+    this.#status = qs(".cg-contrast-grid__status", this);
+
+    this.#takeTemplates();
+    this.#bindEvents();
+    this.#enableDragUi();
+  }
+
+  #applyLevelFilter() {
+    qsa(".cg-contrast-grid__tile", this).forEach((tile) => {
+      tile.style.display = this.#hiddenLevels.has(tile.dataset.level) ? "none" : "";
+    });
+  }
+
+  #takeTemplates() {
+    const take = (id) => {
+      const original = qs("#" + id, this);
+      const clone = original.cloneNode(true);
+      clone.removeAttribute("id");
+      original.remove();
+      return clone;
+    };
+
+    this.#contentCellTemplate = take("cg-contrast-grid__content-cell-template");
+    this.#foregroundKeyCellTemplate = take(
+      "cg-contrast-grid__foreground-key-cell-template",
+    );
+    this.#contentRowTemplate = take("cg-contrast-grid__content-row-template");
+  }
+
+  #bindEvents() {
+    on(EVENTS.colorsChanged, (colors) => this.#updateGrid(colors));
+    on(EVENTS.hiddenLevelsChanged, (levels) => {
+      this.#hiddenLevels = new Set(levels);
+      this.#applyLevelFilter();
+    });
+    on(EVENTS.tileSizeChanged, (tileSize) => this.#changeTileSize(tileSize));
+
+    delegate(
+      this,
+      "click",
+      ".cg-contrast-grid__key-swatch-remove",
+      (event, action) => {
+        event.preventDefault();
+        emit(EVENTS.removeColor, action.dataset.hex, action.dataset.colorset);
+      },
+    );
+
+    delegate(this, "click", ".cg-contrast-grid__key-swatch-copy", (_, action) =>
+      this.#copy(action),
+    );
+
+    delegate(this, "click", ".cg-contrast-grid__key-swatch-move", (_, action) =>
+      this.#move(action),
+    );
+
+    delegate(this, "click", ".cg-contrast-grid__suggest", (_, action) =>
+      this.#suggest(action.closest(".cg-contrast-grid__tile")),
+    );
+  }
+
+  async #copy(action) {
+    const { hex } = action.dataset;
+
+    try {
+      await navigator.clipboard.writeText(hex);
+    } catch {
+      this.#status.textContent = `Could not copy ${hex}`;
+      return;
+    }
+
+    this.#status.textContent = `Copied ${hex}`;
+    action.classList.add("cg-contrast-grid__key-swatch-copy--done");
+    setTimeout(
+      () => action.classList.remove("cg-contrast-grid__key-swatch-copy--done"),
+      COPIED_FEEDBACK_MS,
+    );
+  }
+
+  #suggest(tile) {
+    const { foreground, background } = tile.dataset;
+    const suggestion = suggestTextColor(foreground, background);
+    if (!suggestion) {
+      return;
+    }
+
+    if (this.#colors.foregroundColors.some((c) => c.hex === suggestion.hex)) {
+      this.#status.textContent = `${suggestion.hex} is already in the list`;
+      return;
+    }
+
+    this.#status.textContent = `Added ${suggestion.hex} for ${suggestion.level}`;
+    emit(EVENTS.suggestColor, foreground, suggestion.hex, suggestion.level);
+  }
+
+  #enableDragUi() {
+    this.addEventListener("pointerdown", (event) => {
+      const handle = event.target.closest(".cg-contrast-grid__key-swatch-drag-handle");
+      if (!handle || event.button !== 0) {
+        return;
+      }
+
+      const axis = handle.classList.contains("cg-contrast-grid__key-swatch-drag-handle--column")
+        ? DRAG_AXES.column
+        : DRAG_AXES.row;
+
+      // Stops text selection while dragging.
+      event.preventDefault();
+      this.#drag(handle.closest(axis.item), axis);
+    });
+  }
+
+  // Reorders the DOM while dragging; on release the grid is rebuilt from the
+  // color form, which is the single source of truth.
+  #drag(item, axis) {
+    const initialOrder = this.#extractColors(axis.colorset).join();
+    item.classList.add("cg-contrast-grid__dragged");
+
+    const onMove = (event) => {
+      const position = axis.horizontal ? event.clientX : event.clientY;
+      const others = qsa(`:scope > ${axis.item}`, item.parentElement).filter(
+        (other) => other !== item,
+      );
+      const next = others.find((other) => {
+        const box = other.getBoundingClientRect();
+        return position < (axis.horizontal ? box.left + box.width / 2 : box.top + box.height / 2);
+      });
+
+      if (next && item.nextElementSibling !== next) {
+        next.before(item);
+      } else if (!next && others.length && item.previousElementSibling !== others.at(-1)) {
+        others.at(-1).after(item);
+      }
+
+      this.#autoScroll(event, axis.horizontal);
+    };
+
+    const onEnd = () => {
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onEnd);
+      document.removeEventListener("pointercancel", onEnd);
+      item.classList.remove("cg-contrast-grid__dragged");
+
+      const order = this.#extractColors(axis.colorset);
+      if (order.join() !== initialOrder) {
+        emit(axis.event, order);
+      }
+    };
+
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onEnd);
+    document.addEventListener("pointercancel", onEnd);
+  }
+
+  // Scrolls the grid while the pointer is near its edge, so a color can be dragged past the visible part.
+  #autoScroll(event, horizontal) {
+    const box = this.#grid.getBoundingClientRect();
+    const [position, start, end] = horizontal
+      ? [event.clientX, box.left, box.right]
+      : [event.clientY, box.top, box.bottom];
+
+    if (position < start + AUTOSCROLL_EDGE) {
+      this.#grid.scrollBy(horizontal ? -AUTOSCROLL_STEP : 0, horizontal ? 0 : -AUTOSCROLL_STEP);
+    } else if (position > end - AUTOSCROLL_EDGE) {
+      this.#grid.scrollBy(horizontal ? AUTOSCROLL_STEP : 0, horizontal ? 0 : AUTOSCROLL_STEP);
+    }
+  }
+
+  // A keyboard and single-click alternative to dragging (WCAG 2.1.1, 2.5.7).
+  #move(action) {
+    if (action.getAttribute("aria-disabled") === "true") {
+      return;
+    }
+
+    const swatch = action.closest(".cg-contrast-grid__key-swatch");
+    const colorset = swatch.classList.contains("cg-contrast-grid__key-swatch--foreground")
+      ? "foreground"
+      : "background";
+    const { hex } = swatch.dataset;
+    const { direction } = action.dataset;
+
+    const order = this.#extractColors(colorset);
+    const from = order.indexOf(hex);
+    const to = from + MOVE_STEPS[direction];
+    [order[from], order[to]] = [order[to], order[from]];
+
+    // The grid is rebuilt synchronously, so the button has to be found again.
+    emit(colorset === "foreground" ? EVENTS.foregroundSorted : EVENTS.backgroundSorted, order);
+    qs(
+      `.cg-contrast-grid__key-swatch--${colorset}[data-hex="${hex}"] .cg-contrast-grid__key-swatch-move[data-direction="${direction}"]`,
+      this,
+    )?.focus();
+
+    this.#status.textContent = `${action.dataset.name} moved to position ${to + 1} of ${order.length}`;
+  }
+
+  #fillMoveActions(swatch, color, index, count) {
+    const name = color.label ?? color.hex;
+
+    qsa(".cg-contrast-grid__key-swatch-move", swatch).forEach((action) => {
+      const { direction } = action.dataset;
+      const target = index + MOVE_STEPS[direction];
+
+      action.dataset.name = name;
+      action.setAttribute("aria-label", `Move ${name} ${direction}`);
+      action.setAttribute("aria-disabled", String(target < 0 || target >= count));
+      action.title = `Move ${direction}`;
+    });
+  }
+
+  #extractColors(colorset) {
+    return qsa(`.cg-contrast-grid__key-swatch--${colorset}`, this).map(
+      (swatch) => swatch.dataset.hex,
+    );
+  }
+
+  #getBackgroundColors() {
+    return this.#colors.backgroundColors.length
+      ? this.#colors.backgroundColors
+      : this.#colors.foregroundColors;
+  }
+
+  #fillKeySwatch(swatch, hex, colorset) {
+    swatch.style.backgroundColor = hex;
+    swatch.dataset.hex = hex;
+
+    const removeAction = qs(".cg-contrast-grid__key-swatch-remove", swatch);
+    removeAction.dataset.hex = hex;
+    removeAction.dataset.colorset = colorset;
+    removeAction.setAttribute("aria-label", `Remove ${hex}`);
+
+    const copyAction = qs(".cg-contrast-grid__key-swatch-copy", swatch);
+    copyAction.dataset.hex = hex;
+    copyAction.setAttribute("aria-label", `Copy ${hex}`);
+    copyAction.title = `Copy ${hex}`;
+
+    return {
+      text: qs(".cg-contrast-grid__key-swatch-label-text", swatch),
+      hex: qs(".cg-contrast-grid__key-swatch-label-hex", swatch),
+    };
+  }
+
+  #generateForegroundKey() {
+    const colors = this.#colors.foregroundColors;
+
+    colors.forEach((color, index) => {
+      const cell = this.#foregroundKeyCellTemplate.cloneNode(true);
+      const swatch = qs(".cg-contrast-grid__key-swatch", cell);
+      const label = color.label ?? color.hex;
+      const labels = this.#fillKeySwatch(swatch, color.hex, "foreground");
+      this.#fillMoveActions(swatch, color, index, colors.length);
+
+      if (this.#showLabelsOnColumnKeys) {
+        labels.text.textContent = label;
+        if (color.hex !== label) {
+          labels.hex.textContent = color.hex;
+        }
+      } else {
+        labels.text.textContent = color.hex;
+      }
+
+      this.#foregroundKey.append(cell);
+    });
+  }
+
+  #generateContentRows() {
+    const foregroundColors = this.#colors.foregroundColors;
+    const backgroundColors = this.#getBackgroundColors();
+
+    backgroundColors.forEach((background, index) => {
+      const row = this.#contentRowTemplate.cloneNode(true);
+      const swatch = qs(".cg-contrast-grid__key-swatch", row);
+      const label = background.label ?? background.hex;
+      const labels = this.#fillKeySwatch(swatch, background.hex, "background");
+      this.#fillMoveActions(swatch, background, index, backgroundColors.length);
+
+      labels.text.textContent = label;
+      if (label !== background.hex) {
+        labels.hex.textContent = background.hex;
+      }
+
+      for (const foreground of foregroundColors) {
+        const cell = this.#contentCellTemplate.cloneNode(true);
+
+        if (background.hex === foreground.hex) {
+          const spacer = document.createElement("div");
+          spacer.className = "cg-contrast-grid__tile-spacer";
+          cell.replaceChildren(spacer);
+        } else {
+          const tile = qs(".cg-contrast-grid__tile", cell);
+          tile.style.backgroundColor = background.hex;
+          tile.style.color = foreground.hex;
+          tile.dataset.foreground = foreground.hex;
+          tile.dataset.background = background.hex;
+        }
+
+        row.append(cell);
+      }
+
+      this.#gridContent.append(row);
+    });
+  }
+
+  // Labels and controls take black or white, whichever contrasts more with the background.
+  #markDarkLabel(element, backgroundColor) {
+    const withWhite = getContrastRatioForHex("#FFFFFF", backgroundColor);
+    const withBlack = getContrastRatioForHex("#000000", backgroundColor);
+
+    element.classList.toggle("cg-contrast-grid--white-swatch", withWhite === 1);
+    element.classList.toggle("cg-contrast-grid--black-swatch", withBlack === 1);
+    element.classList.toggle("cg-contrast-grid--dark-label", withBlack > withWhite);
+  }
+
+  // From the colors as entered, not as rendered: a Windows contrast theme replaces the rendered ones.
+  #addContrastToTiles() {
+    qsa(".cg-contrast-grid__tile", this).forEach((tile) => {
+      const { foreground, background } = tile.dataset;
+      const ratio = getContrastRatioForHex(foreground, background);
+      const level = getLevel(ratio);
+      const badge = qs(".cg-contrast-grid__level-badge", tile);
+
+      tile.dataset.level = level.toLowerCase();
+      qs(".cg-contrast-grid__contrast-ratio", tile).textContent = ratio;
+      badge.textContent = level;
+      badge.classList.add(`cg-contrast-grid__level-badge--${tile.dataset.level}`);
+      this.#markDarkLabel(tile, background);
+    });
+  }
+
+  // Only whether the next level is reachable; the search itself waits for a click.
+  #prepareSuggestions() {
+    qsa(".cg-contrast-grid__tile", this).forEach((tile) => {
+      const button = qs(".cg-contrast-grid__suggest", tile);
+      const next = getNextLevel(tile.dataset.foreground, tile.dataset.background);
+
+      button.hidden = !next;
+      if (!next) {
+        return;
+      }
+
+      const label = next.reachable
+        ? `Add a text color that passes ${next.level}`
+        : `${next.level} is out of reach on this background`;
+      button.setAttribute("aria-label", label);
+      button.setAttribute("aria-disabled", String(!next.reachable));
+      button.title = label;
+    });
+  }
+
+  #setKeySwatchLabelColors() {
+    qsa(".cg-contrast-grid__key-swatch", this).forEach((swatch) =>
+      this.#markDarkLabel(swatch, swatch.dataset.hex),
+    );
+  }
+
+  #markSingleColor() {
+    const singleColor =
+      this.#colors.foregroundColors.length <= 1 &&
+      this.#colors.backgroundColors.length <= 1;
+
+    this.#grid.classList.toggle("cg-contrast-grid--single-color", singleColor);
+  }
+
+  #reset() {
+    qsa(".cg-contrast-grid__content-row", this).forEach((row) => row.remove());
+    qsa(".cg-contrast-grid__foreground-key-cell", this).forEach((cell) =>
+      cell.remove(),
+    );
+  }
+
+  #generate() {
+    this.#generateForegroundKey();
+    this.#generateContentRows();
+    this.#addContrastToTiles();
+    this.#applyLevelFilter();
+    this.#prepareSuggestions();
+    this.#setKeySwatchLabelColors();
+    this.#markSingleColor();
+  }
+
+  #updateGrid(colors) {
+    this.#colors = colors;
+    this.#showLabelsOnColumnKeys = colors.backgroundColors.length > 0;
+    this.#reset();
+    this.#generate();
+  }
+
+  #changeTileSize(size) {
+    this.#grid.style.setProperty("--tile-size", `${size}px`);
+  }
+}
+
+customElements.define("cg-contrast-grid", ContrastGridElement);

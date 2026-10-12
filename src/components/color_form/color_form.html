@@ -1,0 +1,80 @@
+<form class="cg-color-form">
+    <p class="cg-color-form__copy">
+        Every text color on every background, checked against WCAG 2.2.
+    </p>
+    <p class="cg-color-form__copy">
+        Paste your palette, one color per line, in any CSS format. Give a color a name after a semicolon.
+    </p>
+    <div class="cg-color-form__field-wrapper cg-color-form__field-wrapper--background-colors">
+        <label for="cg-color-form__background-colors" class="cg-color-form__label">Backgrounds (rows)</label>
+        <textarea id="cg-color-form__background-colors" class="cg-color-form__textarea" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="#FF8000; Orange" aria-describedby="cg-color-form__background-colors-error"></textarea>
+        <p id="cg-color-form__background-colors-error" class="cg-color-form__error" aria-live="polite"></p>
+        <button type="button" class="cg-color-form__eyedropper" data-target="cg-color-form__background-colors" hidden>
+            <cg-icon name="eyedropper" class="cg-color-form__eyedropper-icon"></cg-icon>
+            Pick a color from the screen
+        </button>
+        <button type="button" class="cg-color-form__swap">
+            <cg-icon name="swap" class="cg-color-form__swap-icon"></cg-icon>
+            Swap text and backgrounds
+        </button>
+    </div>
+    <div class="cg-color-form__field-wrapper">
+        <label for="cg-color-form__foreground-colors" class="cg-color-form__label">Your colors</label>
+        <textarea id="cg-color-form__foreground-colors" class="cg-color-form__textarea" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="#FF8000; Orange" aria-describedby="cg-color-form__foreground-colors-error">
+#FFFFFF; White
+#BFBFBF; Light Gray
+#767676; Gray
+#404040; Dark Gray
+#000000; Black
+#FFBF00; Yellow Orange
+#FF8000; Orange
+#FF4000; Red Orange
+</textarea>
+        <p id="cg-color-form__foreground-colors-error" class="cg-color-form__error" aria-live="polite"></p>
+        <button type="button" class="cg-color-form__eyedropper" data-target="cg-color-form__foreground-colors" hidden>
+            <cg-icon name="eyedropper" class="cg-color-form__eyedropper-icon"></cg-icon>
+            Pick a color from the screen
+        </button>
+        <div class="cg-color-form__mode">
+            <a href="#" class="cg-color-form__use-separate-lists">Use separate lists for text and backgrounds</a>
+            <a href="#" class="cg-color-form__use-one-list">Use one list for both</a>
+        </div>
+    </div>
+
+    <div class="cg-color-form__field-wrapper">
+        <label class="cg-color-form__label" for="cg-color-form__tile-size-number">Tile size</label>
+        <div class="cg-color-form__range-group">
+            <input type="range" id="cg-color-form__tile-size" class="cg-color-form__range" min="45" max="300" step="1" value="80" autocomplete="off" aria-label="Tile size slider">
+            <input type="number" id="cg-color-form__tile-size-number" class="cg-color-form__number" min="45" max="300" step="1" value="80" autocomplete="off">
+            <span class="cg-color-form__unit">px</span>
+        </div>
+    </div>
+
+    <fieldset class="cg-color-form__field-wrapper cg-color-form__fieldset">
+        <legend class="cg-color-form__label">Show levels</legend>
+
+        <div class="cg-color-form__levels">
+            <label for="cg-color-form__show-contrast--aaa" class="cg-color-form__level">
+                <input class="cg-color-form__level-toggle" type="checkbox" id="cg-color-form__show-contrast--aaa" data-level="aaa">
+                <span class="cg-contrast-grid__level-badge">AAA</span>
+                <span>7:1 or more</span>
+            </label>
+            <label for="cg-color-form__show-contrast--aa" class="cg-color-form__level">
+                <input class="cg-color-form__level-toggle" type="checkbox" id="cg-color-form__show-contrast--aa" data-level="aa">
+                <span class="cg-contrast-grid__level-badge">AA</span>
+                <span>4.5:1 or more</span>
+            </label>
+            <label for="cg-color-form__show-contrast--large" class="cg-color-form__level">
+                <input class="cg-color-form__level-toggle" type="checkbox" id="cg-color-form__show-contrast--large" data-level="large">
+                <span class="cg-contrast-grid__level-badge cg-contrast-grid__level-badge--large">Large</span>
+                <span>3:1 or more (Large Text &amp; UI Components)</span>
+            </label>
+            <label for="cg-color-form__show-contrast--fail" class="cg-color-form__level">
+                <input class="cg-color-form__level-toggle" type="checkbox" id="cg-color-form__show-contrast--fail" data-level="fail">
+                <span class="cg-contrast-grid__level-badge cg-contrast-grid__level-badge--fail">Fail</span>
+                <span>below 3:1</span>
+            </label>
+        </div>
+        <a class="cg-color-form__levels-link" href="https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html">About WCAG 2.2 contrast</a>
+    </fieldset>
+</form>

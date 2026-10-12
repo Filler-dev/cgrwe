@@ -1,0 +1,183 @@
+.cg-color-form {
+    padding: var(--cg-space-md) var(--cg-space-md) 0;
+}
+
+.cg-color-form__copy {
+    font-size: var(--cg-font-size);
+    margin: 0 0 var(--cg-space-sm);
+}
+
+.cg-color-form__field-wrapper {
+    margin-bottom: var(--cg-space-md);
+}
+
+.cg-color-form__eyedropper,
+.cg-color-form__swap {
+    align-items: center;
+    background: none;
+    border: 0;
+    color: var(--cg-link);
+    cursor: pointer;
+    display: flex;
+    font-family: var(--cg-font);
+    font-size: var(--cg-font-size-sm);
+    gap: 4px;
+    margin-bottom: var(--cg-space-xs);
+    padding: 0;
+    width: fit-content;
+
+    &:hover {
+        color: var(--cg-link-hover);
+        text-decoration: underline;
+    }
+
+    /* `display` above would otherwise defeat the hidden attribute. */
+    &[hidden] {
+        display: none;
+    }
+}
+
+.cg-color-form__eyedropper-icon,
+.cg-color-form__swap-icon {
+    fill: currentColor;
+    height: var(--cg-font-size);
+    width: var(--cg-font-size);
+}
+
+.cg-color-form__label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: var(--cg-space-sm);
+}
+
+/* Groups the level filters under one heading without the browser's frame. */
+.cg-color-form__fieldset {
+    border: 0;
+    margin-inline: 0;
+    min-width: 0;
+    padding: 0;
+
+    legend {
+        padding: 0;
+    }
+}
+
+.cg-color-form__textarea {
+    border-radius: var(--cg-radius);
+    border: solid 1px var(--cg-border);
+    font-family: var(--cg-font);
+    font-size: var(--cg-font-size);
+    height: 200px;
+    padding: var(--cg-space-xs);
+    margin-bottom: var(--cg-space-sm);
+    /* Wider would push past the sidebar. */
+    resize: vertical;
+    width: 100%;
+
+    &[aria-invalid="true"] {
+        border-color: var(--cg-error);
+    }
+}
+
+.cg-color-form__error {
+    color: var(--cg-error);
+    font-size: var(--cg-font-size-sm);
+    margin: calc(-1 * var(--cg-space-xs)) 0 var(--cg-space-sm);
+
+    /* Kept in the page while empty, so screen readers announce it once it fills. */
+    &:empty {
+        margin: 0;
+    }
+
+    code {
+        font-family: ui-monospace, monospace;
+        /* A long line must not widen the sidebar, which sizes to its content. */
+        overflow-wrap: anywhere;
+    }
+}
+
+.cg-color-form__field-wrapper--background-colors {
+    display: none;
+
+    .cg-color-form--separate-lists & {
+        display: block;
+    }
+}
+
+.cg-color-form--separate-lists .cg-color-form__use-separate-lists {
+    visibility: hidden;
+}
+
+/* Both links share one cell, so the sidebar fits the longer one in either mode. */
+.cg-color-form__mode {
+    display: grid;
+    justify-items: start;
+}
+
+.cg-color-form__use-separate-lists,
+.cg-color-form__use-one-list {
+    grid-area: 1 / 1;
+    white-space: nowrap;
+}
+
+.cg-color-form__use-one-list {
+    visibility: hidden;
+
+    .cg-color-form--separate-lists & {
+        visibility: visible;
+    }
+}
+
+.cg-color-form__range-group {
+    align-items: center;
+    display: flex;
+    gap: var(--cg-space-xs);
+}
+
+.cg-color-form__range {
+    accent-color: var(--cg-link);
+    flex: 1;
+    min-width: 0;
+}
+
+.cg-color-form__number {
+    border: solid 1px var(--cg-border);
+    border-radius: var(--cg-radius);
+    font-family: var(--cg-font);
+    font-size: var(--cg-font-size-sm);
+    padding: 4px;
+    width: 60px;
+}
+
+.cg-color-form__unit {
+    color: var(--cg-muted);
+    font-size: var(--cg-font-size-sm);
+}
+
+/* Doubles as the legend: each filter shows the badge used on the tiles. */
+.cg-color-form__levels {
+    display: grid;
+    gap: var(--cg-space-xs);
+}
+
+.cg-color-form__level {
+    align-items: center;
+    cursor: pointer;
+    display: grid;
+    font-size: var(--cg-font-size-sm);
+    gap: var(--cg-space-xs);
+    grid-template-columns: auto auto 1fr;
+    /* WCAG 2.5.8: the whole row is the target. */
+    min-height: 24px;
+}
+
+.cg-color-form__level-toggle {
+    accent-color: var(--cg-link);
+    margin: 0;
+}
+
+.cg-color-form__levels-link {
+    display: inline-block;
+    font-size: var(--cg-font-size-sm);
+    margin-top: var(--cg-space-sm);
+}
