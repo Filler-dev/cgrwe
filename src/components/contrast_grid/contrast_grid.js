@@ -5,29 +5,20 @@ import {
   getLevel,
 } from "../../color/contrast.js";
 import { getNextLevel, suggestTextColor } from "../../color/suggest.js";
-import template from "./contrast_grid.html?raw";
+import { enableDragging } from "./drag.js";
 
 const COPIED_FEEDBACK_MS = 1500;
 
 const MOVE_STEPS = { left: -1, up: -1, right: 1, down: 1 };
 
-const DRAG_AXES = {
-  column: {
-    item: ".cg-contrast-grid__foreground-key-cell",
-    colorset: "foreground",
-    event: EVENTS.foregroundSorted,
-    horizontal: true,
-  },
-  row: {
-    item: ".cg-contrast-grid__content-row",
-    colorset: "background",
-    event: EVENTS.backgroundSorted,
-    horizontal: false,
-  },
+const SORTED_EVENTS = {
+  foreground: EVENTS.foregroundSorted,
+  background: EVENTS.backgroundSorted,
 };
 
-const AUTOSCROLL_EDGE = 40;
-const AUTOSCROLL_STEP = 12;
+// importNode rather than cloneNode, so the icons inside are upgraded as custom elements.
+const instantiate = (templateElement) =>
+  document.importNode(templateElement.content.firstElementChild, true);
 
 class ContrastGridElement extends HTMLElement {
   #grid;
@@ -37,43 +28,29 @@ class ContrastGridElement extends HTMLElement {
   #foregroundKeyCellTemplate;
   #contentRowTemplate;
   #contentCellTemplate;
-  #showLabelsOnColumnKeys = false;
   #colors;
   #hiddenLevels = new Set();
 
+  // The markup from contrast_grid.html is already in the page, put there at build time.
   connectedCallback() {
-    this.innerHTML = template;
-
     this.#grid = qs(".cg-contrast-grid", this);
     this.#gridContent = qs(".cg-contrast-grid__content", this);
     this.#foregroundKey = qs(".cg-contrast-grid__foreground-key", this);
     this.#status = qs(".cg-contrast-grid__status", this);
+    this.#foregroundKeyCellTemplate = qs(".cg-contrast-grid__foreground-key-cell-template", this);
+    this.#contentRowTemplate = qs(".cg-contrast-grid__content-row-template", this);
+    this.#contentCellTemplate = qs(".cg-contrast-grid__content-cell-template", this);
 
-    this.#takeTemplates();
     this.#bindEvents();
-    this.#enableDragUi();
+    enableDragging(this, this.#grid, (colorset) =>
+      emit(SORTED_EVENTS[colorset], this.#extractColors(colorset)),
+    );
   }
 
   #applyLevelFilter() {
     qsa(".cg-contrast-grid__tile", this).forEach((tile) => {
       tile.style.display = this.#hiddenLevels.has(tile.dataset.level) ? "none" : "";
     });
-  }
-
-  #takeTemplates() {
-    const take = (id) => {
-      const original = qs("#" + id, this);
-      const clone = original.cloneNode(true);
-      clone.removeAttribute("id");
-      original.remove();
-      return clone;
-    };
-
-    this.#contentCellTemplate = take("cg-contrast-grid__content-cell-template");
-    this.#foregroundKeyCellTemplate = take(
-      "cg-contrast-grid__foreground-key-cell-template",
-    );
-    this.#contentRowTemplate = take("cg-contrast-grid__content-row-template");
   }
 
   #bindEvents() {
@@ -141,79 +118,6 @@ class ContrastGridElement extends HTMLElement {
     emit(EVENTS.suggestColor, foreground, suggestion.hex, suggestion.level);
   }
 
-  #enableDragUi() {
-    this.addEventListener("pointerdown", (event) => {
-      const handle = event.target.closest(".cg-contrast-grid__key-swatch-drag-handle");
-      if (!handle || event.button !== 0) {
-        return;
-      }
-
-      const axis = handle.classList.contains("cg-contrast-grid__key-swatch-drag-handle--column")
-        ? DRAG_AXES.column
-        : DRAG_AXES.row;
-
-      // Stops text selection while dragging.
-      event.preventDefault();
-      this.#drag(handle.closest(axis.item), axis);
-    });
-  }
-
-  // Reorders the DOM while dragging; on release the grid is rebuilt from the
-  // color form, which is the single source of truth.
-  #drag(item, axis) {
-    const initialOrder = this.#extractColors(axis.colorset).join();
-    item.classList.add("cg-contrast-grid__dragged");
-
-    const onMove = (event) => {
-      const position = axis.horizontal ? event.clientX : event.clientY;
-      const others = qsa(`:scope > ${axis.item}`, item.parentElement).filter(
-        (other) => other !== item,
-      );
-      const next = others.find((other) => {
-        const box = other.getBoundingClientRect();
-        return position < (axis.horizontal ? box.left + box.width / 2 : box.top + box.height / 2);
-      });
-
-      if (next && item.nextElementSibling !== next) {
-        next.before(item);
-      } else if (!next && others.length && item.previousElementSibling !== others.at(-1)) {
-        others.at(-1).after(item);
-      }
-
-      this.#autoScroll(event, axis.horizontal);
-    };
-
-    const onEnd = () => {
-      document.removeEventListener("pointermove", onMove);
-      document.removeEventListener("pointerup", onEnd);
-      document.removeEventListener("pointercancel", onEnd);
-      item.classList.remove("cg-contrast-grid__dragged");
-
-      const order = this.#extractColors(axis.colorset);
-      if (order.join() !== initialOrder) {
-        emit(axis.event, order);
-      }
-    };
-
-    document.addEventListener("pointermove", onMove);
-    document.addEventListener("pointerup", onEnd);
-    document.addEventListener("pointercancel", onEnd);
-  }
-
-  // Scrolls the grid while the pointer is near its edge, so a color can be dragged past the visible part.
-  #autoScroll(event, horizontal) {
-    const box = this.#grid.getBoundingClientRect();
-    const [position, start, end] = horizontal
-      ? [event.clientX, box.left, box.right]
-      : [event.clientY, box.top, box.bottom];
-
-    if (position < start + AUTOSCROLL_EDGE) {
-      this.#grid.scrollBy(horizontal ? -AUTOSCROLL_STEP : 0, horizontal ? 0 : -AUTOSCROLL_STEP);
-    } else if (position > end - AUTOSCROLL_EDGE) {
-      this.#grid.scrollBy(horizontal ? AUTOSCROLL_STEP : 0, horizontal ? 0 : AUTOSCROLL_STEP);
-    }
-  }
-
   // A keyboard and single-click alternative to dragging (WCAG 2.1.1, 2.5.7).
   #move(action) {
     if (action.getAttribute("aria-disabled") === "true") {
@@ -233,7 +137,7 @@ class ContrastGridElement extends HTMLElement {
     [order[from], order[to]] = [order[to], order[from]];
 
     // The grid is rebuilt synchronously, so the button has to be found again.
-    emit(colorset === "foreground" ? EVENTS.foregroundSorted : EVENTS.backgroundSorted, order);
+    emit(SORTED_EVENTS[colorset], order);
     qs(
       `.cg-contrast-grid__key-swatch--${colorset}[data-hex="${hex}"] .cg-contrast-grid__key-swatch-move[data-direction="${direction}"]`,
       this,
@@ -290,15 +194,17 @@ class ContrastGridElement extends HTMLElement {
 
   #generateForegroundKey() {
     const colors = this.#colors.foregroundColors;
+    // With one shared list the row keys already carry the labels.
+    const showLabels = this.#colors.backgroundColors.length > 0;
 
     colors.forEach((color, index) => {
-      const cell = this.#foregroundKeyCellTemplate.cloneNode(true);
+      const cell = instantiate(this.#foregroundKeyCellTemplate);
       const swatch = qs(".cg-contrast-grid__key-swatch", cell);
       const label = color.label ?? color.hex;
       const labels = this.#fillKeySwatch(swatch, color.hex, "foreground");
       this.#fillMoveActions(swatch, color, index, colors.length);
 
-      if (this.#showLabelsOnColumnKeys) {
+      if (showLabels) {
         labels.text.textContent = label;
         if (color.hex !== label) {
           labels.hex.textContent = color.hex;
@@ -316,7 +222,7 @@ class ContrastGridElement extends HTMLElement {
     const backgroundColors = this.#getBackgroundColors();
 
     backgroundColors.forEach((background, index) => {
-      const row = this.#contentRowTemplate.cloneNode(true);
+      const row = instantiate(this.#contentRowTemplate);
       const swatch = qs(".cg-contrast-grid__key-swatch", row);
       const label = background.label ?? background.hex;
       const labels = this.#fillKeySwatch(swatch, background.hex, "background");
@@ -328,7 +234,7 @@ class ContrastGridElement extends HTMLElement {
       }
 
       for (const foreground of foregroundColors) {
-        const cell = this.#contentCellTemplate.cloneNode(true);
+        const cell = instantiate(this.#contentCellTemplate);
 
         if (background.hex === foreground.hex) {
           const spacer = document.createElement("div");
@@ -349,8 +255,8 @@ class ContrastGridElement extends HTMLElement {
     });
   }
 
-  // Labels and controls take black or white, whichever contrasts more with the background.
-  #markDarkLabel(element, backgroundColor) {
+  // Labels and controls take black or white, whichever contrasts more; pure white and black get an outline.
+  #markContrastClasses(element, backgroundColor) {
     const withWhite = getContrastRatioForHex("#FFFFFF", backgroundColor);
     const withBlack = getContrastRatioForHex("#000000", backgroundColor);
 
@@ -371,7 +277,7 @@ class ContrastGridElement extends HTMLElement {
       qs(".cg-contrast-grid__contrast-ratio", tile).textContent = ratio;
       badge.textContent = level;
       badge.classList.add(`cg-contrast-grid__level-badge--${tile.dataset.level}`);
-      this.#markDarkLabel(tile, background);
+      this.#markContrastClasses(tile, background);
     });
   }
 
@@ -397,7 +303,7 @@ class ContrastGridElement extends HTMLElement {
 
   #setKeySwatchLabelColors() {
     qsa(".cg-contrast-grid__key-swatch", this).forEach((swatch) =>
-      this.#markDarkLabel(swatch, swatch.dataset.hex),
+      this.#markContrastClasses(swatch, swatch.dataset.hex),
     );
   }
 
@@ -428,7 +334,6 @@ class ContrastGridElement extends HTMLElement {
 
   #updateGrid(colors) {
     this.#colors = colors;
-    this.#showLabelsOnColumnKeys = colors.backgroundColors.length > 0;
     this.#reset();
     this.#generate();
   }

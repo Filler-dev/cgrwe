@@ -99,6 +99,7 @@ With a shared list ("Your colors"), an action moves or removes the color in its 
 
 - **The full state lives in the address:** colors, labels, separate lists, tile size and hidden levels. A copied address opens the grid exactly the same for anyone else.
 - **Back leaves the page, Forward returns to the latest state.** Edits add no entries to the browser history.
+- **Shortcuts** for frequently used palettes, e.g. `/rwe` (see [Adding shortcuts](#adding-shortcuts)).
 
 ### Feedback
 
@@ -167,6 +168,18 @@ VITE_FEEDBACK_EMAIL=[Feedback-Adresse]
 
 Vite reads `.env` only on start, so restart the development server after a change.
 
+### Adding shortcuts
+
+Shortcuts such as `/rwe` live in the `SHORTCUTS` object in [vite.config.js](vite.config.js). The value is the address the app itself writes to the address bar, so a new shortcut is made by setting up the palette and copying the address from `/?` onwards:
+
+```js
+const SHORTCUTS = {
+  rwe: "/?fg=000000;+Black%0AFFFFFF;+White%0A…",
+};
+```
+
+The development server redirects a shortcut directly. The build emits a redirect page for each one, e.g. `dist/rwe/index.html`.
+
 ---
 
 ## Tests
@@ -233,17 +246,21 @@ If a variable is missing, the workflow stops, so no placeholders go live.
 │   └── components/
 │       ├── color_form/        <cg-color-form>: input, filters, tile size
 │       │   ├── color_input.js color conversion, reading, checking and editing lines
+│       │   ├── line_messages.js  hints for invalid and repeated lines
 │       │   └── query.js       writes the state to the address and reads it back
-│       ├── contrast_grid/     <cg-contrast-grid>: grid, buttons, dragging
+│       ├── contrast_grid/     <cg-contrast-grid>: grid, buttons
+│       │   └── drag.js        moving columns and rows by dragging
 │       └── icon/              <cg-icon>: icons from Bootstrap Icons
 ├── tests/
 │   ├── unit/
 │   └── browser/
-├── vite.config.js             build, shortcuts
+├── vite.config.js             build, shortcuts, component markup, Content Security Policy
 └── vitest.config.js           test environments
 ```
 
-Form and grid are web components without shadow DOM. They talk through events, with the form as the single source of truth: every change made in the grid goes to the form as an event, the form updates its text and has the grid redrawn.
+Form and grid are web components without shadow DOM. Their markup (`color_form.html`, `contrast_grid.html`) is written into `index.html` when the page is built, so the layout is final before any script runs and nothing shifts. The components only bring it to life. They talk through events, with the form as the single source of truth: every change made in the grid goes to the form as an event, the form updates its text and has the grid redrawn.
+
+The build adds a Content Security Policy as a `<meta>` tag: scripts, styles and everything else may only come from the site itself. The development server goes without, as it injects styles inline.
 
 ---
 
@@ -262,4 +279,4 @@ Current versions of Chrome, Edge, Firefox and Safari. Older browsers cannot rend
 
 ## Acknowledgements
 
-The icons come from [Bootstrap Icons](https://icons.getbootstrap.com/) (MIT license).
+The OKLab conversion follows [Björn Ottosson](https://bottosson.github.io/posts/oklab/). The icons come from [Bootstrap Icons](https://icons.getbootstrap.com/) (MIT license).

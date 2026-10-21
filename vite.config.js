@@ -1,8 +1,19 @@
+import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 
 const root = dirname(fileURLToPath(import.meta.url));
+
+// Written into the page rather than by script, so the layout is final before any script runs.
+const COMPONENT_MARKUP = {
+  "cg-color-form": resolve(root, "src/components/color_form/color_form.html"),
+  "cg-contrast-grid": resolve(root, "src/components/contrast_grid/contrast_grid.html"),
+};
+
+// A meta tag cannot set frame-ancestors; GitHub Pages offers no response headers for it.
+const CONTENT_SECURITY_POLICY =
+  "default-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'";
 
 // Short aliases for frequently used palettes. The query string is the same one
 // the app writes to the address bar, so a shortcut can be created by copying
@@ -65,9 +76,51 @@ function shortcutsPlugin() {
   };
 }
 
+function componentMarkupPlugin() {
+  const files = Object.values(COMPONENT_MARKUP);
+
+  return {
+    name: "contrast-grid:component-markup",
+    transformIndexHtml: {
+      order: "pre",
+      handler: (html) =>
+        Object.entries(COMPONENT_MARKUP).reduce(
+          (page, [tag, file]) =>
+            page.replace(`<${tag}></${tag}>`, () => `<${tag}>${readFileSync(file, "utf8")}</${tag}>`),
+          html,
+        ),
+    },
+    // The markup files are no longer imported by any script, so the dev server would not see them change.
+    configureServer(server) {
+      server.watcher.add(files);
+      server.watcher.on("change", (file) => {
+        if (files.includes(resolve(file))) {
+          server.ws.send({ type: "full-reload" });
+        }
+      });
+    },
+  };
+}
+
+// Build only: the dev server injects styles and scripts inline.
+function contentSecurityPolicyPlugin() {
+  return {
+    name: "contrast-grid:content-security-policy",
+    apply: "build",
+    transformIndexHtml: () => [
+      {
+        tag: "meta",
+        attrs: { "http-equiv": "Content-Security-Policy", content: CONTENT_SECURITY_POLICY },
+        // A policy only covers what follows it.
+        injectTo: "head-prepend",
+      },
+    ],
+  };
+}
+
 export default defineConfig({
   base: "./",
-  plugins: [shortcutsPlugin()],
+  plugins: [componentMarkupPlugin(), contentSecurityPolicyPlugin(), shortcutsPlugin()],
   build: {
     rollupOptions: {
       input: {

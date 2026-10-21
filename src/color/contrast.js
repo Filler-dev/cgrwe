@@ -1,8 +1,10 @@
 // An sRGB channel from 0 to 1 in linear light, with the 0.04045 threshold of WCAG 2.2.
 const toLinear = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
 
+// One parse and no callbacks: the suggestion search calls this thousands of times per click.
 export function hexToLinearRgb(hex) {
-  return [1, 3, 5].map((i) => toLinear(parseInt(hex.slice(i, i + 2), 16) / 255));
+  const n = parseInt(hex.slice(1), 16);
+  return [toLinear((n >> 16) / 255), toLinear(((n >> 8) & 255) / 255), toLinear((n & 255) / 255)];
 }
 
 function luminance(hex) {

@@ -10,6 +10,7 @@ const SCAN_STEP = 0.005;
 
 const fromLinear = (c) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
 
+// OKLab conversion after Björn Ottosson, https://bottosson.github.io/posts/oklab/
 export function hexToOklab(hex) {
   const [r, g, b] = hexToLinearRgb(hex);
 

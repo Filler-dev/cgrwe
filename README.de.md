@@ -99,6 +99,7 @@ Bei gemeinsamer Liste („Your colors") verschiebt und entfernt eine Aktion die 
 
 - **Der komplette Stand steht in der Adresse:** Farben, Labels, getrennte Listen, Kachelgröße und ausgeblendete Stufen. Eine kopierte Adresse öffnet das Grid bei anderen genauso.
 - **Zurück verlässt die Seite, Vorwärts kehrt zum letzten Stand zurück.** Änderungen erzeugen keine Einträge im Browserverlauf.
+- **Kürzel** für häufig genutzte Paletten, z. B. `/rwe` (siehe [Kürzel anlegen](#kürzel-anlegen)).
 
 ### Feedback
 
@@ -167,6 +168,18 @@ VITE_FEEDBACK_EMAIL=[Feedback-Adresse]
 
 Vite liest die `.env` nur beim Start. Nach einer Änderung muss der Entwicklungsserver neu gestartet werden.
 
+### Kürzel anlegen
+
+Kürzel wie `/rwe` stehen im Objekt `SHORTCUTS` in [vite.config.js](vite.config.js). Der Wert ist die Adresse, die die App selbst in die Adresszeile schreibt. Ein neues Kürzel entsteht also, indem man die gewünschte Palette einstellt und die Adresse ab `/?` kopiert:
+
+```js
+const SHORTCUTS = {
+  rwe: "/?fg=000000;+Black%0AFFFFFF;+White%0A…",
+};
+```
+
+Der Entwicklungsserver leitet das Kürzel direkt weiter. Beim Build entsteht für jedes Kürzel eine Weiterleitungsseite, z. B. `dist/rwe/index.html`.
+
 ---
 
 ## Tests
@@ -233,17 +246,21 @@ Fehlt eine Variable, bricht der Workflow ab, damit keine Platzhalter veröffentl
 │   └── components/
 │       ├── color_form/        <cg-color-form>: Eingabe, Filter, Kachelgröße
 │       │   ├── color_input.js Farbumrechnung, Zeilen lesen, prüfen und bearbeiten
+│       │   ├── line_messages.js  Hinweise zu ungültigen und doppelten Zeilen
 │       │   └── query.js       Zustand in die Adresse schreiben und daraus lesen
-│       ├── contrast_grid/     <cg-contrast-grid>: Grid, Buttons, Ziehen
+│       ├── contrast_grid/     <cg-contrast-grid>: Grid, Buttons
+│       │   └── drag.js        Spalten und Zeilen per Ziehen verschieben
 │       └── icon/              <cg-icon>: Icons aus Bootstrap Icons
 ├── tests/
 │   ├── unit/
 │   └── browser/
-├── vite.config.js             Build, Kürzel
+├── vite.config.js             Build, Kürzel, Komponenten-Markup, Content Security Policy
 └── vitest.config.js           Testumgebungen
 ```
 
-Formular und Grid sind Web Components ohne Shadow DOM. Sie tauschen sich über Ereignisse aus, das Formular ist dabei die einzige Quelle der Wahrheit: Jede Änderung im Grid geht als Ereignis ans Formular, das den Text anpasst und das Grid neu zeichnen lässt.
+Formular und Grid sind Web Components ohne Shadow DOM. Ihr Markup (`color_form.html`, `contrast_grid.html`) wird beim Build direkt in `index.html` geschrieben. So steht das Layout, bevor ein Skript läuft, und nichts verschiebt sich. Die Komponenten erwecken es nur zum Leben. Sie tauschen sich über Ereignisse aus, das Formular ist dabei die einzige Quelle der Wahrheit: Jede Änderung im Grid geht als Ereignis ans Formular, das den Text anpasst und das Grid neu zeichnen lässt.
+
+Der Build ergänzt eine Content Security Policy als `<meta>`-Tag: Skripte, Styles und alles andere dürfen nur von der eigenen Seite kommen. Der Entwicklungsserver verzichtet darauf, weil er Styles inline einfügt.
 
 ---
 
@@ -262,4 +279,4 @@ Aktuelle Versionen von Chrome, Edge, Firefox und Safari. Ältere Browser können
 
 ## Danksagung
 
-Die Icons stammen aus [Bootstrap Icons](https://icons.getbootstrap.com/) (MIT-Lizenz).
+Die OKLab-Umrechnung folgt [Björn Ottosson](https://bottosson.github.io/posts/oklab/). Die Icons stammen aus [Bootstrap Icons](https://icons.getbootstrap.com/) (MIT-Lizenz).

@@ -1,8 +1,9 @@
 .cg-contrast-grid {
+    /* Same as the tile size field's value="80", so the first paint already has the final size. */
     --tile-size: 80px;
     --tile-padding: calc(var(--tile-size) / 12);
     --key-divider: var(--cg-gray-50);
-    --key-divider-shadow: rgba(0, 0, 0, .28);
+    --key-divider-shadow: rgb(0 0 0 / .28);
 
     height: 100%;
     overflow: auto;
@@ -123,7 +124,7 @@
 }
 
 .cg-contrast-grid--black-swatch {
-    border: solid 1px light-dark(transparent, #444444);
+    border: solid 1px light-dark(transparent, var(--cg-rule));
 }
 
 .cg-contrast-grid__tile {
@@ -312,7 +313,7 @@
     cursor: pointer;
 
     &:hover {
-        background: rgba(128, 128, 128, .3);
+        background: rgb(128 128 128 / .3);
     }
 
     &:focus-visible {

@@ -1,62 +1,11 @@
 import { qs, qsa, debounce } from "../../scripts/dom.js";
 import { EVENTS, emit, on } from "../../scripts/events.js";
 import { findDuplicateLines, findInvalidLines, insertLineAfterColor, parseColorInput, removeColorLines, reorderColorLines} from "./color_input.js";
+import { describeLineProblems } from "./line_messages.js";
 import { fromQuery, toQuery } from "./query.js";
-import template from "./color_form.html?raw";
-
-const MAX_QUOTED_LENGTH = 40;
-
-function quote(text) {
-  const code = document.createElement("code");
-  code.textContent =
-    text.length > MAX_QUOTED_LENGTH ? text.slice(0, MAX_QUOTED_LENGTH - 1) + "…" : text;
-  return code;
-}
-
-const listLines = (lines) => `${lines.slice(0, -1).join(", ")} and ${lines.at(-1)}`;
-
-// Nodes rather than HTML, as the quoted lines are user input.
-function describeLineProblems(invalid, duplicates) {
-  const parts = [];
-
-  if (invalid.length === 1) {
-    parts.push(`Line ${invalid[0].line} is not a valid color: `, quote(invalid[0].text), ".");
-  } else if (invalid.length > 1) {
-    parts.push(`Lines ${listLines(invalid.map((entry) => entry.line))} are not valid colors.`);
-  }
-
-  const fix = invalid.find((entry) => entry.fix)?.fix;
-  if (fix) {
-    parts.push(" Separate the label with a semicolon: ", quote(fix), ".");
-  }
-
-  const gap = parts.length > 0 ? " " : "";
-  if (duplicates.length === 1) {
-    parts.push(`${gap}Line ${duplicates[0].line} repeats line ${duplicates[0].first}.`);
-  } else if (duplicates.length > 1) {
-    parts.push(`${gap}Lines ${listLines(duplicates.map((entry) => entry.line))} repeat earlier colors.`);
-  }
-
-  return parts;
-}
 
 // Stripped before a new level is appended, so labels never read "Orange (Large) (AA)".
 const LEVEL_SUFFIX = /\s*\((Large|AA|AAA)\)$/;
-
-// Keep in sync with the min/max attributes in color_form.html.
-const MIN_TILE_SIZE = 45;
-const MAX_TILE_SIZE = 300;
-const DEFAULT_TILE_SIZE = 80;
-
-function normalizeTileSize(raw) {
-  const value = Number(raw);
-
-  if (!Number.isFinite(value)) {
-    return DEFAULT_TILE_SIZE;
-  }
-
-  return Math.min(MAX_TILE_SIZE, Math.max(MIN_TILE_SIZE, Math.round(value)));
-}
 
 class ColorFormElement extends HTMLElement {
   #form;
@@ -64,21 +13,32 @@ class ColorFormElement extends HTMLElement {
   #backgroundInput;
   #tileSizeRange;
   #tileSizeNumber;
+  #tileSizeLimits;
   #foregroundColors = [];
   #backgroundColors = [];
   // The text colors of the separate lists, restored when switching back to them.
   #savedForeground;
 
+  // The markup from color_form.html is already in the page, put there at build time.
   connectedCallback() {
-    this.innerHTML = template;
-
     this.#form = qs(".cg-color-form", this);
     this.#foregroundInput = qs("#cg-color-form__foreground-colors", this);
     this.#backgroundInput = qs("#cg-color-form__background-colors", this);
     this.#tileSizeRange = qs("#cg-color-form__tile-size", this);
     this.#tileSizeNumber = qs("#cg-color-form__tile-size-number", this);
 
+    // Read from the markup, so the field is already right before any script runs.
+    const { min, max, defaultValue } = this.#tileSizeRange;
+    this.#tileSizeLimits = { min: Number(min), max: Number(max), initial: Number(defaultValue) };
+
     this.#bindEvents();
+  }
+
+  #normalizeTileSize(raw) {
+    const value = Number(raw);
+    const { min, max, initial } = this.#tileSizeLimits;
+
+    return Number.isFinite(value) ? Math.min(max, Math.max(min, Math.round(value))) : initial;
   }
 
   // Called once every component is upgraded, so the grid is already listening.
@@ -135,7 +95,7 @@ class ColorFormElement extends HTMLElement {
     window.addEventListener("pagehide", () => this.syncUrl());
 
     this.#tileSizeRange.addEventListener("input", () => {
-      this.#applyTileSize(normalizeTileSize(this.#tileSizeRange.value));
+      this.#applyTileSize(this.#normalizeTileSize(this.#tileSizeRange.value));
       onTileSizeSettled();
     });
 
@@ -143,14 +103,14 @@ class ColorFormElement extends HTMLElement {
     // that is already in range and tidy up on blur.
     this.#tileSizeNumber.addEventListener("input", () => {
       const value = Number(this.#tileSizeNumber.value);
-      if (value >= MIN_TILE_SIZE && value <= MAX_TILE_SIZE) {
+      if (value >= this.#tileSizeLimits.min && value <= this.#tileSizeLimits.max) {
         this.#applyTileSize(Math.round(value), { syncNumber: false });
         onTileSizeSettled();
       }
     });
 
     this.#tileSizeNumber.addEventListener("change", () => {
-      this.#applyTileSize(normalizeTileSize(this.#tileSizeNumber.value));
+      this.#applyTileSize(this.#normalizeTileSize(this.#tileSizeNumber.value));
       onTileSizeSettled();
     });
 
@@ -193,8 +153,6 @@ class ColorFormElement extends HTMLElement {
   #readColors() {
     this.#foregroundColors = parseColorInput(this.#foregroundInput.value);
     this.#backgroundColors = parseColorInput(this.#backgroundInput.value);
-    this.#showInvalidLines(this.#foregroundInput);
-    this.#showInvalidLines(this.#backgroundInput);
 
     return {
       foregroundColors: this.#foregroundColors,
@@ -203,6 +161,8 @@ class ColorFormElement extends HTMLElement {
   }
 
   #broadcastColors() {
+    this.#showLineProblems(this.#foregroundInput);
+    this.#showLineProblems(this.#backgroundInput);
     emit(EVENTS.colorsChanged, this.#readColors());
     this.#updateUrl();
   }
@@ -218,7 +178,7 @@ class ColorFormElement extends HTMLElement {
     emit(EVENTS.hiddenLevelsChanged, this.#hiddenLevels());
   }
 
-  #showInvalidLines(textarea) {
+  #showLineProblems(textarea) {
     const invalid = findInvalidLines(textarea.value);
 
     textarea.setAttribute("aria-invalid", String(invalid.length > 0));
@@ -238,16 +198,16 @@ class ColorFormElement extends HTMLElement {
   }
 
   #broadcastTileSize() {
-    this.#applyTileSize(normalizeTileSize(this.#tileSizeRange.value));
+    this.#applyTileSize(this.#normalizeTileSize(this.#tileSizeRange.value));
   }
 
   #updateUrl() {
-    const size = normalizeTileSize(this.#tileSizeRange.value);
+    const size = this.#normalizeTileSize(this.#tileSizeRange.value);
 
     const query = toQuery({
       background: this.#backgroundInput.value,
       foreground: this.#foregroundInput.value,
-      tileSize: size === DEFAULT_TILE_SIZE ? null : size,
+      tileSize: size === this.#tileSizeLimits.initial ? null : size,
       hidden: this.#hiddenLevels(),
     });
 
@@ -327,7 +287,7 @@ class ColorFormElement extends HTMLElement {
       this.#backgroundInput.value = background;
     }
     if (tileSize !== null) {
-      this.#tileSizeRange.value = normalizeTileSize(tileSize);
+      this.#tileSizeRange.value = this.#normalizeTileSize(tileSize);
     }
 
     qsa(".cg-color-form__level-toggle", this).forEach((input) => {
