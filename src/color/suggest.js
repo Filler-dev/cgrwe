@@ -1,10 +1,4 @@
-import { getContrastRatioForHex, getLevel, hexToLinearRgb } from "./contrast.js";
-
-const NEXT_LEVEL = {
-  Fail: { level: "Large", ratio: 3 },
-  Large: { level: "AA", ratio: 4.5 },
-  AA: { level: "AAA", ratio: 7 },
-};
+import { LEVELS, getContrastRatioForHex, hexToLinearRgb } from "./contrast.js";
 
 const SCAN_STEP = 0.005;
 
@@ -77,8 +71,11 @@ function isReachable(background, ratio) {
 
 // Null at AAA; otherwise the next level and whether any text lightness reaches it.
 export function getNextLevel(foreground, background) {
-  const next = NEXT_LEVEL[getLevel(getContrastRatioForHex(foreground, background))];
-  return next ? { ...next, reachable: isReachable(background, next.ratio) } : null;
+  const ratio = getContrastRatioForHex(foreground, background);
+  const next = LEVELS[LEVELS.findIndex((level) => ratio >= level.ratio) - 1];
+  return next
+    ? { level: next.name, ratio: next.ratio, reachable: isReachable(background, next.ratio) }
+    : null;
 }
 
 // The smallest OKLCH lightness change reaching the next level, with hue and chroma kept.

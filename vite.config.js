@@ -7,8 +7,8 @@ const root = dirname(fileURLToPath(import.meta.url));
 
 // Written into the page rather than by script, so the layout is final before any script runs.
 const COMPONENT_MARKUP = {
-  "cg-color-form": resolve(root, "src/components/color_form/color_form.html"),
-  "cg-contrast-grid": resolve(root, "src/components/contrast_grid/contrast_grid.html"),
+  "cg-color-form": resolve(root, "src/components/color-form/color-form.html"),
+  "cg-contrast-grid": resolve(root, "src/components/contrast-grid/contrast-grid.html"),
 };
 
 // A meta tag cannot set frame-ancestors; GitHub Pages offers no response headers for it.
@@ -122,7 +122,7 @@ export default defineConfig({
   base: "./",
   plugins: [componentMarkupPlugin(), contentSecurityPolicyPlugin(), shortcutsPlugin()],
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       input: {
         main: resolve(root, "index.html"),
         impressum: resolve(root, "impressum.html"),

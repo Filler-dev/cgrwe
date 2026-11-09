@@ -22,15 +22,14 @@ export function getContrastRatioForHex(foregroundColor, backgroundColor) {
   return Math.floor(((lighter + 0.05) / (darker + 0.05)) * 100 + 1e-9) / 100;
 }
 
+// From the highest down; Fail is what reaches none of the others.
+export const LEVELS = [
+  { name: "AAA", ratio: 7 },
+  { name: "AA", ratio: 4.5 },
+  { name: "Large", ratio: 3 },
+  { name: "Fail", ratio: 0 },
+];
+
 export function getLevel(ratio) {
-  if (ratio >= 7) {
-    return "AAA";
-  }
-  if (ratio >= 4.5) {
-    return "AA";
-  }
-  if (ratio >= 3) {
-    return "Large";
-  }
-  return "Fail";
+  return LEVELS.find((level) => ratio >= level.ratio).name;
 }
